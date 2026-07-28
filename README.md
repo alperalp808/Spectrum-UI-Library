@@ -41,27 +41,40 @@ local Window = Spectrum:AddWindow({
        }
    }
 })
+```
 
+```
 Window Methods
 -- Create a Tab
 local Tab = Window:AddTab("Tab Name")
 
 -- Change Theme at runtime
 Window:SetTheme("Dark")
+```
 
+
+```
 -- Send a Notification
 Window:Notify({
    Title = "Notification Title",
    Content = "This is a notification message.",
    Duration = 3
 })
+```
 
-Tabs & Sections
+
+## Tabs & Sections
+```
 local Tab = Window:AddTab("Main Tab")
 local Section = Tab:AddSection("General Section")
+```
 
-UI Components & Usage
-1. Button
+
+## UI Components & Usage
+
+
+## 1. Button
+```
 Section:AddButton({
    Name = "Click Me",
    Notifications = true,
@@ -69,8 +82,10 @@ Section:AddButton({
        print("Button clicked!")
    end
 })
+```
 
-2. Toggle
+## 2. Toggle
+```
 local MyToggle = Section:AddToggle({
    Name = "Auto Farm",
    Default = false,
@@ -80,10 +95,13 @@ local MyToggle = Section:AddToggle({
    end
 })
 
+
 -- Optional: Add a quick keybind to the toggle
 MyToggle:AddKeybind("F")
+```
 
-3. Keybind
+## 3. Keybind
+```
 local MyKeybind = Section:AddKeybind({
    Name = "Teleport Key",
    Default = Enum.KeyCode.E,
@@ -93,8 +111,10 @@ local MyKeybind = Section:AddKeybind({
        print("Keybind triggered!")
    end
 })
+```
 
-4. Slider
+## 4. Slider
+```
 local MySlider = Section:AddSlider({
    Name = "WalkSpeed",
    Min = 16,
@@ -106,8 +126,10 @@ local MySlider = Section:AddSlider({
        print("Slider value:", value)
    end
 })
+```
 
-5. Textbox
+## 5. Textbox
+```
 local MyTextbox = Section:AddTextbox({
    Name = "Enter Command",
    PlaceholderText = "Type here...",
@@ -117,8 +139,10 @@ local MyTextbox = Section:AddTextbox({
        print("Input text:", text)
    end
 })
+```
 
-6. Colorpicker
+## 6. Colorpicker
+```
 local MyColorpicker = Section:AddColorpicker({
    Name = "Accent Color",
    Default = Color3.fromRGB(255, 255, 255),
@@ -127,8 +151,10 @@ local MyColorpicker = Section:AddColorpicker({
        print("Selected color:", color)
    end
 })
+```
 
-7. Dropdown (Single & Multi)
+## 7. Dropdown (Single & Multi)
+```
 -- Single Selection
 local MyDropdown = Section:AddDropdown({
    Name = "Select Weapon",
@@ -154,16 +180,20 @@ local MyMultiDropdown = Section:AddDropdown({
        end
    end
 })
+```
 
-8. Label
+## 8. Label
+```
 local MyLabel = Section:AddLabel({
    Text = "Status: Idle"
 })
+```
 
-Element Methods & Functions
+## Element Methods & Functions
 Most components support runtime modification via specific methods:
 
-Setting & Getting Values
+## Setting & Getting Values
+```
 -- Toggle
 MyToggle:Set(true)
 local state = MyToggle:Get()
@@ -199,7 +229,7 @@ MyElement:Visible(true)
 
 -- Completely remove element from UI
 MyElement:Destroy()
-
-License
+```
+# License
 This library is open-source and free to use for script development purposes.
 
