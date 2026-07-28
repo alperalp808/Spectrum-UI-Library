@@ -19,7 +19,7 @@ Spectrum UI is a modern, feature-rich, and lightweight user interface library de
 Load the library via your script executor using `loadstring`:
 
 ```lua
-local Spectrum = loadstring(game:HttpGet("YOUR_LIBRARY_URL_HERE"))()
+local Spectrum = loadstring(game:HttpGet("https://raw.githubusercontent.com/alperalp808/Spectrum-UI-Library/refs/heads/main/Spectrum%20Source"))()
 
 Window Initialization & Methods
 Creating a Window
