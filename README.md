@@ -43,8 +43,9 @@ local Window = Spectrum:AddWindow({
 })
 ```
 
+
+## Window Methods
 ```
-Window Methods
 -- Create a Tab
 local Tab = Window:AddTab("Tab Name")
 
@@ -53,8 +54,9 @@ Window:SetTheme("Dark")
 ```
 
 
+
+## Send a Notification
 ```
--- Send a Notification
 Window:Notify({
    Title = "Notification Title",
    Content = "This is a notification message.",
@@ -70,7 +72,7 @@ local Section = Tab:AddSection("General Section")
 ```
 
 
-## UI Components & Usage
+# UI Components & Usage
 
 
 ## 1. Button
