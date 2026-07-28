@@ -1,0 +1,161 @@
+local Spectrum = loadstring(game:HttpGet("https://raw.githubusercontent.com/alperalp808/Spectrum-UI-Library/refs/heads/main/Spectrum%20Source"))()
+
+-- 1. Pencere Oluşturma ve Key Sistemi Testi
+local Window = Spectrum:AddWindow({
+    Name = "Spectrum v3.4.0 - Kapsamlı Test",
+    Theme = "Aqua",
+    ToggleKeybind = Enum.KeyCode.RightControl,
+    Size = UDim2.new(0, 650, 0, 420),
+    Notifications = true,
+    ToggleButton = true,
+    
+    -- Yeni Key Sistemi (Kullanıcı Adı + Şifre ve Çoklu Kullanıcı Doğrulaması)
+    KeySystem = {
+        Enabled = true,
+        Title = "Spectrum Güvenlik Testi",
+        Note = "Test için kullanıcı adı: 'admin', şifre: '1234'",
+        Users = {
+            { User = "admin", Pass = "1234" },
+            { User = "testuser", Pass = "abcd" }
+        }
+    }
+})
+
+-- Açılışta test bildirimi
+Window:Notify({
+    Title = "Hoş Geldiniz!",
+    Content = "Spectrum UI başarıyla yüklendi ve test paneli hazır.",
+    Duration = 4
+})
+
+--=====================================================================
+-- 2. SEKMELERİN OLUŞTURULMASI
+--=====================================================================
+local MainTab = Window:AddTab("Ana Kontroller")
+local SettingsTab = Window:AddTab("Ayarlar & Temalar")
+local AdvancedTab = Window:AddTab("Gelişmiş Özellikler")
+
+--=====================================================================
+-- BÖLÜM 1: ANA KONTROLLER (MainTab)
+--=====================================================================
+local GeneralSection = MainTab:AddSection("Genel İşlemler")
+
+-- Buton Testi
+GeneralSection:AddButton({
+    Name = "Test Bildirimi Gönder",
+    Notifications = true,
+    Callback = function()
+        Window:Notify({
+            Title = "Buton Çalıştı",
+            Content = "Özel bildirim başarıyla tetiklendi!",
+            Duration = 2.5
+        })
+    end
+})
+
+-- Toggle Testi
+local AutoFarmToggle = GeneralSection:AddToggle({
+    Name = "Otomatik Farm (Auto Farm)",
+    Default = false,
+    Notifications = true,
+    Callback = function(state)
+        print("Auto Farm Durumu:", state)
+    end
+})
+
+-- Toggle içine Keybind ekleme testi
+AutoFarmToggle:AddKeybind("F")
+
+-- Keybind Testi (Normal & Toggle Mod)
+GeneralSection:AddKeybind({
+    Name = "Hızlı Işınlanma Tuşu",
+    Default = Enum.KeyCode.Q,
+    Mode = "Button", -- veya "Toggle"
+    Notifications = true,
+    Callback = function()
+        print("Işınlanma tuşuna basıldı!")
+    end
+})
+
+-- Slider Testi
+GeneralSection:AddSlider({
+    Name = "Hız (WalkSpeed) Ayarı",
+    Min = 16,
+    Max = 250,
+    Default = 16,
+    Increment = 1,
+    Notifications = true,
+    Callback = function(value)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+        end
+    end
+})
+
+--=====================================================================
+-- BÖLÜM 2: GELİŞMİŞ BİLEŞENLER (SettingsTab)
+--=====================================================================
+local ConfigSection = SettingsTab:AddSection("Arayüz Yapılandırması")
+
+-- Textbox Testi
+ConfigSection:AddTextbox({
+    Name = "Özel Mesaj Gönder",
+    PlaceholderText = "Buraya yazı yazın...",
+    Default = "",
+    Notifications = true,
+    Callback = function(text)
+        print("Girilen Metin:", text)
+    end
+})
+
+-- Colorpicker Testi
+ConfigSection:AddColorpicker({
+    Name = "Arayüz Vurgu Rengi",
+    Default = Color3.fromRGB(0, 204, 255),
+    Notifications = true,
+    Callback = function(color)
+        print("Seçilen Renk:", color)
+    end
+})
+
+-- Dropdown Testi (Tekli Seçim)
+ConfigSection:AddDropdown({
+    Name = "Tema Seçimi",
+    Options = {"Aqua", "Green", "Dark", "Foggy", "Sun", "Crimson", "Light"},
+    Default = "Aqua",
+    Multi = false,
+    Notifications = true,
+    Callback = function(selectedTheme)
+        Window:SetTheme(selectedTheme)
+    end
+})
+
+-- Dropdown Testi (Çoklu Seçim)
+ConfigSection:AddDropdown({
+    Name = "Aktif Modüller",
+    Options = {"ESP", "Aimbot", "GodMode", "Fly", "Noclip"},
+    Default = {"ESP"},
+    Multi = true,
+    Notifications = true,
+    Callback = function(selectedList)
+        print("Seçilen Modüller güncellendi!")
+    end
+})
+
+--=====================================================================
+-- BÖLÜM 3: BİLGİLENDİRME & DİĞERLERİ (AdvancedTab)
+--=====================================================================
+local InfoSection = AdvancedTab:AddSection("Sistem Bilgileri")
+
+-- Label Testi
+local StatusLabel = InfoSection:AddLabel({
+    Text = "Durum: Sistem kararlı ve çalışıyor."
+})
+
+InfoSection:AddButton({
+    Name = "Durum Metnini Güncelle",
+    Notifications = false,
+    Callback = function()
+        StatusLabel:Set("Durum: Son test zamanı - " .. os.date("%H:%M:%S"))
+    end
+})
