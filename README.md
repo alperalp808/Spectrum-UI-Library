@@ -77,13 +77,15 @@ local Section = Tab:AddSection("General Section")
 
 ## 1. Button
 ```
-Section:AddButton({
-   Name = "Click Me",
-   Notifications = true,
-   Callback = function()
-       print("Button clicked!")
-   end
+local Button = Section:AddButton({
+    Name = "Click",
+    Notifications = true,
+    Callback = function()
+        print("Clicked")
+    end
 })
+
+Button:AddKeybind("Q")
 ```
 
 ## 2. Toggle
