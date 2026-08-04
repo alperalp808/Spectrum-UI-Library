@@ -1,13 +1,13 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.4.0
+    SPECTRUM UI LIBRARY  |  v3.5.0
     ------------------------------------------------------------
     Yenilikler ve Güncellemeler:
-    - Sağ üstteki kapatma (X) tuşu artık menüyü gizlemek yerine tamamen siliyor (Destroy).
-    - Key Sistemi güncellendi: Artık hem Kullanıcı Adı hem de Şifre zorunlu; 
-      özel/tekli key kalktı, tamamen listedeki kullanıcılar üzerinden doğrulanıyor 
-      ve açılıp kapanabilir (aktif/pasif) hale getirildi.
-    - Tüm mevcut temalar, bileşenler ve performans iyileştirmeleri korundu.
+    - Section Düzeni Güncellendi: Eleman eklendikçe otomatik büyüyen
+      ve sayfa içerisine düzgün oturan dinamik kart yapısına geçildi.
+    - Button:AddKeybind("KeyName") Desteği: Butonların sağ tarafına 
+      dinamik keybind ekleme ve tuş değiştirme özelliği getirildi.
+    - Tüm mevcut temalar, bileşenler ve animasyonlar korundu.
     ============================================================
 ]]
 
@@ -440,7 +440,7 @@ function Spectrum:AddWindow(config)
         Position = UDim2.new(1, -108, 1, -16),
         BackgroundTransparency = 1,
         Font = Enum.Font.Gotham,
-        Text = "Spectrum v3.4.0",
+        Text = "Spectrum v3.5.0",
         TextColor3 = Theme.SubText,
         TextTransparency = 0.4,
         TextSize = 9,
@@ -503,7 +503,6 @@ function Spectrum:AddWindow(config)
         end)
     end
 
-    -- Kapatma tuşu artık arayüzü tamamen yok eder (Destroy)
     function Window:Destroy()
         Window.Open = false
         if ScreenGui and ScreenGui.Parent then
@@ -614,7 +613,7 @@ function Spectrum:AddWindow(config)
         local NotifStroke = Stroke(NotifFrame, Theme.Accent, 1, 0.35)
         Themed(NotifStroke, "Color", "Accent")
         Pad(NotifFrame, 12, 10, 12, 10)
-        
+
         local NotifLine = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 2),
             BackgroundColor3 = Theme.Accent,
@@ -677,9 +676,7 @@ function Spectrum:AddWindow(config)
         end
     end
 
-    --=====================================================
-    -- YENİLENMİŞ KEY SİSTEMİ (Kullanıcı Adı + Şifre, Çoklu Liste)
-    --=====================================================
+    -- Key System
     if KeySystemCfg.Enabled then
         local KeyScreen = Create("Frame", {
             Name = "KeyScreen",
@@ -718,7 +715,6 @@ function Spectrum:AddWindow(config)
             Parent = KeyScreen,
         }), "TextColor3", "SubText")
 
-        -- Kullanıcı Adı Kutusu
         local UserInput = Create("TextBox", {
             Size = UDim2.new(1, 0, 0, 34),
             Position = UDim2.new(0, 0, 0, 65),
@@ -738,7 +734,6 @@ function Spectrum:AddWindow(config)
         Themed(Stroke(UserInput, Theme.Stroke, 1, 0.3), "Color", "Stroke")
         Pad(UserInput, 10, 0, 10, 0)
 
-        -- Şifre Kutusu
         local PassInput = Create("TextBox", {
             Size = UDim2.new(1, 0, 0, 34),
             Position = UDim2.new(0, 0, 0, 107),
@@ -847,11 +842,13 @@ function Spectrum:AddWindow(config)
             Parent = ContentArea,
         })
         Themed(Page, "ScrollBarImageColor3", "Accent")
+
         Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
+            Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
             Parent = Page,
         })
+        Pad(Page, 0, 0, 6, 10)
 
         Tab.Button = TabButton
         Tab.Label = TabLabel
@@ -879,10 +876,10 @@ function Spectrum:AddWindow(config)
         function Tab:AddSection(sectionName)
             sectionName = sectionName or "Section"
             local Section = {}
-            local MAX_SECTION_HEIGHT = 220
 
+            -- Section eklenen elemanlara göre otomatik uzayacak şekilde ayarlandı
             local SectionOuter = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 0),
+                Size = UDim2.new(1, -6, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Secondary,
                 BackgroundTransparency = 0.12,
@@ -903,6 +900,7 @@ function Spectrum:AddWindow(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = SectionOuter,
             }), "TextColor3", "Accent")
+
             Themed(Create("Frame", {
                 Size = UDim2.new(1, -24, 0, 1),
                 Position = UDim2.new(0, 12, 0, 30),
@@ -912,32 +910,21 @@ function Spectrum:AddWindow(config)
                 Parent = SectionOuter,
             }), "BackgroundColor3", "Accent")
 
-            local ElementHolder = Create("ScrollingFrame", {
+            local ElementHolder = Create("Frame", {
                 Size = UDim2.new(1, -20, 0, 0),
                 Position = UDim2.new(0, 10, 0, 36),
+                AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1,
                 BorderSizePixel = 0,
-                ScrollBarThickness = 3,
-                ScrollBarImageColor3 = Theme.Accent,
-                CanvasSize = UDim2.new(0, 0, 0, 0),
-                AutomaticCanvasSize = Enum.AutomaticSize.Y,
                 Parent = SectionOuter,
             })
-            Themed(ElementHolder, "ScrollBarImageColor3", "Accent")
-            
+
             local EHLayout = Create("UIListLayout", {
                 Padding = UDim.new(0, 6),
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 Parent = ElementHolder,
             })
             Pad(SectionOuter, 0, 0, 0, 10)
-
-            local function UpdateHolderHeight()
-                local contentHeight = EHLayout.AbsoluteContentSize.Y
-                ElementHolder.Size = UDim2.new(1, -20, 0, math.min(contentHeight, MAX_SECTION_HEIGHT))
-            end
-            EHLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateHolderHeight)
-            UpdateHolderHeight()
 
             local function BaseElement(height)
                 local Frame = Create("Frame", {
@@ -988,7 +975,8 @@ function Spectrum:AddWindow(config)
                     AutoButtonColor = false,
                     Parent = Frame,
                 })
-                Themed(Create("TextLabel", {
+
+                local BtnLabel = Create("TextLabel", {
                     Size = UDim2.new(1, -20, 1, 0),
                     Position = UDim2.new(0, 12, 0, 0),
                     BackgroundTransparency = 1,
@@ -998,16 +986,10 @@ function Spectrum:AddWindow(config)
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = Frame,
-                }), "TextColor3", "Text")
+                })
+                Themed(BtnLabel, "TextColor3", "Text")
 
-                Btn.MouseEnter:Connect(function()
-                    Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15)
-                end)
-                Btn.MouseLeave:Connect(function()
-                    Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15)
-                end)
-
-                Btn.MouseButton1Click:Connect(function()
+                local function TriggerButton()
                     ClickBounce(Frame)
                     Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.05 }, 0.1)
                     task.delay(0.15, function()
@@ -1018,9 +1000,67 @@ function Spectrum:AddWindow(config)
                     PlaySound(Sounds.Click, 0.4)
                     DoNotify(Notifications, "Button Tetiklendi", Name .. " butonuna basıldı.")
                     task.spawn(Callback)
+                end
+
+                Btn.MouseEnter:Connect(function()
+                    Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15)
+                end)
+                Btn.MouseLeave:Connect(function()
+                    Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15)
                 end)
 
-                return { Instance = Frame }
+                Btn.MouseButton1Click:Connect(TriggerButton)
+
+                local API = { Instance = Frame }
+
+                -- Button için Keybind Ekleme Fonksiyonu
+                function API:AddKeybind(keyName)
+                    local keyCode = Enum.KeyCode[keyName] or Enum.KeyCode.Unknown
+                    local Listening = false
+
+                    BtnLabel.Size = UDim2.new(1, -70, 1, 0)
+
+                    local KeyBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 45, 0, 20),
+                        Position = UDim2.new(1, -50, 0.5, -10),
+                        BackgroundColor3 = Theme.Secondary,
+                        Text = keyCode.Name,
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 10,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = Frame,
+                    })
+                    Themed(KeyBtn, "BackgroundColor3", "Secondary")
+                    Themed(KeyBtn, "TextColor3", "Text")
+                    Themed(Stroke(KeyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    KeyBtn.MouseButton1Click:Connect(function()
+                        if Listening then return end
+                        Listening = true
+                        KeyBtn.Text = "..."
+                        PlaySound(Sounds.Click, 0.3)
+                        local conn
+                        conn = UserInputService.InputBegan:Connect(function(input, processed)
+                            if input.UserInputType == Enum.UserInputType.Keyboard then
+                                keyCode = input.KeyCode
+                                KeyBtn.Text = keyCode.Name
+                                Listening = false
+                                DoNotify(Notifications, "Keybind Ayarlandı", Name .. " -> " .. keyCode.Name)
+                                conn:Disconnect()
+                            end
+                        end)
+                    end)
+
+                    UserInputService.InputBegan:Connect(function(input, processed)
+                        if processed or Listening then return end
+                        if input.KeyCode == keyCode and keyCode ~= Enum.KeyCode.Unknown then
+                            TriggerButton()
+                        end
+                    end)
+                end
+
+                return API
             end
 
             function Section:AddToggle(cfg)
@@ -1060,7 +1100,7 @@ function Spectrum:AddWindow(config)
                 })
                 local SwitchStroke = Stroke(SwitchBG, Theme.Stroke, 1, 0.4)
                 Themed(SwitchStroke, "Color", "Stroke")
-                
+
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 16, 0, 16),
                     Position = State and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
@@ -1253,7 +1293,7 @@ function Spectrum:AddWindow(config)
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = Frame,
                 }), "TextColor3", "Text")
-                
+
                 local ValueLabel = Themed(Create("TextLabel", {
                     Size = UDim2.new(0, 50, 0, 20),
                     Position = UDim2.new(1, -58, 0, 4),
@@ -1273,14 +1313,14 @@ function Spectrum:AddWindow(config)
                     BorderSizePixel = 0,
                     Parent = Frame,
                 }), "BackgroundColor3", "Stroke")
-                
+
                 local Fill = Themed(Create("Frame", {
                     Size = UDim2.new((Value - Min) / (Max - Min), 0, 1, 0),
                     BackgroundColor3 = Theme.Accent,
                     BorderSizePixel = 0,
                     Parent = Track,
                 }), "BackgroundColor3", "Accent")
-                
+
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 12, 0, 12),
                     Position = UDim2.new((Value - Min) / (Max - Min), -6, 0.5, -6),
