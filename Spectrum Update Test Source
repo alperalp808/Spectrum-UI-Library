@@ -1,13 +1,13 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.5.0
+    SPECTRUM UI LIBRARY  |  v3.5.0 (Custom Player Panel Edition)
     ------------------------------------------------------------
     Yenilikler ve Güncellemeler:
-    - Section Düzeni Güncellendi: Eleman eklendikçe otomatik büyüyen
-      ve sayfa içerisine düzgün oturan dinamik kart yapısına geçildi.
-    - Button:AddKeybind("KeyName") Desteği: Butonların sağ tarafına 
-      dinamik keybind ekleme ve tuş değiştirme özelliği getirildi.
-    - Tüm mevcut temalar, bileşenler ve animasyonlar korundu.
+    - Dynamic Control Panel: Oyuncu profil resmi, Oyuncu/Görünür İsim,
+      User ID, Oyun İsmi ve Kopyalanabilir Place ID kartı.
+    - Dynamic Player List: Oyundan çıkan/giren oyuncuları anlık takip eder.
+    - Işınlanma (🚀 TP) & Spectate (👁️ Spectate) Fonksiyonları.
+    - Section Düzeni Güncellendi & AddKeybind Desteği Korundu.
     ============================================================
 ]]
 
@@ -16,6 +16,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players           = game:GetService("Players")
 local SoundService      = game:GetService("SoundService")
 local Debris            = game:GetService("Debris")
+local MarketPlaceService= game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui     = LocalPlayer:WaitForChild("PlayerGui")
@@ -221,10 +222,11 @@ function Spectrum:AddWindow(config)
     local WindowName       = config.Name or "Spectrum"
     local ThemeName         = config.Theme or "Aqua"
     local ToggleKeybind     = config.ToggleKeybind or Enum.KeyCode.RightControl
-    local WindowSize         = config.Size or UDim2.new(0, 620, 0, 380)
+    local WindowSize         = config.Size or UDim2.new(0, 640, 0, 440)
     local GlobalNotifications = (config.Notifications == nil) and true or config.Notifications
     local KeySystemCfg       = config.KeySystem or { Enabled = false }
     local ToggleButtonEnabled = (config.ToggleButton == nil) and true or config.ToggleButton
+    local ShowControlPanel  = (config.ControlPanel == nil) and true or config.ControlPanel
 
     local Theme = Themes[ThemeName] or Themes.Aqua
 
@@ -613,7 +615,7 @@ function Spectrum:AddWindow(config)
         local NotifStroke = Stroke(NotifFrame, Theme.Accent, 1, 0.35)
         Themed(NotifStroke, "Color", "Accent")
         Pad(NotifFrame, 12, 10, 12, 10)
-        
+
         local NotifLine = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 2),
             BackgroundColor3 = Theme.Accent,
@@ -801,6 +803,281 @@ function Spectrum:AddWindow(config)
         end)
     end
 
+    --=====================================================================
+    -- YENİ EKLENTİ: OYUNCU BİLGİSİ VE KONTROL PANELİ (Pencere Tepesi)
+    --=====================================================================
+    local ControlPanelFrame
+    local SpectatingPlayer = nil
+
+    local function CreateControlPanel(parentPage)
+        if not ShowControlPanel then return end
+
+        local PanelFrame = Create("Frame", {
+            Name = "ControlPanelFrame",
+            Size = UDim2.new(1, -6, 0, 185),
+            BackgroundColor3 = Theme.Secondary,
+            BackgroundTransparency = 0.12,
+            BorderSizePixel = 0,
+            Parent = parentPage,
+        })
+        Themed(PanelFrame, "BackgroundColor3", "Secondary")
+        Themed(Stroke(PanelFrame, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
+        Pad(PanelFrame, 8, 8, 8, 8)
+
+        -- 1. PROFİL KARTI
+        local ProfileCard = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 60),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            Parent = PanelFrame,
+        })
+        Themed(ProfileCard, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(ProfileCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        local AvatarImg = Create("ImageLabel", {
+            Size = UDim2.new(0, 48, 0, 48),
+            Position = UDim2.new(0, 6, 0.5, -24),
+            BackgroundColor3 = Theme.Secondary,
+            BackgroundTransparency = 0.5,
+            Image = "rbxassetid://0",
+            Parent = ProfileCard,
+        })
+        Themed(AvatarImg, "BackgroundColor3", "Secondary")
+        Themed(Stroke(AvatarImg, Theme.Accent, 1, 0.2), "Color", "Accent")
+
+        -- Profil Resmi Çekme
+        task.spawn(function()
+            local content = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+            if AvatarImg and AvatarImg.Parent then
+                AvatarImg.Image = content
+            end
+        end)
+
+        local NameLabel = Themed(Create("TextLabel", {
+            Size = UDim2.new(0.5, -60, 0, 18),
+            Position = UDim2.new(0, 60, 0, 6),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")",
+            TextColor3 = Theme.Text,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            Parent = ProfileCard,
+        }), "TextColor3", "Text")
+
+        local IdLabel = Themed(Create("TextLabel", {
+            Size = UDim2.new(0.5, -60, 0, 14),
+            Position = UDim2.new(0, 60, 0, 24),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            Text = "User ID: " .. tostring(LocalPlayer.UserId),
+            TextColor3 = Theme.SubText,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = ProfileCard,
+        }), "TextColor3", "SubText")
+
+        -- Oyun Bilgisi & Place ID Kopyalama
+        local PlaceName = "Yükleniyor..."
+        pcall(function()
+            local info = MarketPlaceService:GetProductInfo(game.PlaceId)
+            if info and info.Name then PlaceName = info.Name end
+        end)
+
+        local GameLabel = Themed(Create("TextLabel", {
+            Size = UDim2.new(0.5, -10, 0, 16),
+            Position = UDim2.new(0.5, 0, 0, 6),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = "🎮 " .. PlaceName,
+            TextColor3 = Theme.Accent,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            Parent = ProfileCard,
+        }), "TextColor3", "Accent")
+
+        local CopyPlaceBtn = Create("TextButton", {
+            Size = UDim2.new(0, 120, 0, 20),
+            Position = UDim2.new(1, -125, 0, 32),
+            BackgroundColor3 = Theme.Secondary,
+            Text = "📋 Place ID: " .. tostring(game.PlaceId),
+            Font = Enum.Font.GothamMedium,
+            TextSize = 9,
+            TextColor3 = Theme.SubText,
+            AutoButtonColor = false,
+            Parent = ProfileCard,
+        })
+        Themed(CopyPlaceBtn, "BackgroundColor3", "Secondary")
+        Themed(CopyPlaceBtn, "TextColor3", "SubText")
+        Themed(Stroke(CopyPlaceBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        CopyPlaceBtn.MouseButton1Click:Connect(function()
+            ClickBounce(CopyPlaceBtn)
+            PlaySound(Sounds.Click, 0.3)
+            if setclipboard then
+                setclipboard(tostring(game.PlaceId))
+                Window:Notify({ Title = "Kopyalandı!", Content = "Place ID panoya kopyalandı.", Duration = 2 })
+            else
+                Window:Notify({ Title = "Hata", Content = "Executor'ınız setclipboard desteklemiyor.", Duration = 2 })
+            end
+        end)
+
+        -- 2. DİNAMİK OYUNCU LİSTESİ
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.new(0, 2, 0, 66),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = "👥 Sunucu Oyuncu Listesi",
+            TextColor3 = Theme.Text,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = PanelFrame,
+        }), "TextColor3", "Text")
+
+        local PlayerScroll = Create("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 0, 92),
+            Position = UDim2.new(0, 0, 0, 86),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.2,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 2,
+            ScrollBarImageColor3 = Theme.Accent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Parent = PanelFrame,
+        })
+        Themed(PlayerScroll, "BackgroundColor3", "Tertiary")
+        Themed(PlayerScroll, "ScrollBarImageColor3", "Accent")
+        Themed(Stroke(PlayerScroll, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+        Pad(PlayerScroll, 4, 4, 4, 4)
+
+        local ListLayout = Create("UIListLayout", {
+            Padding = UDim.new(0, 4),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = PlayerScroll,
+        })
+
+        local function RefreshPlayerList()
+            for _, child in ipairs(PlayerScroll:GetChildren()) do
+                if child:IsA("Frame") then child:Destroy() end
+            end
+
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer then
+                    local PlrFrame = Create("Frame", {
+                        Size = UDim2.new(1, 0, 0, 26),
+                        BackgroundColor3 = Theme.Secondary,
+                        BackgroundTransparency = 0.1,
+                        BorderSizePixel = 0,
+                        Parent = PlayerScroll,
+                    })
+                    Themed(PlrFrame, "BackgroundColor3", "Secondary")
+                    Themed(Stroke(PlrFrame, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+
+                    local PlrNameLabel = Themed(Create("TextLabel", {
+                        Size = UDim2.new(1, -125, 1, 0),
+                        Position = UDim2.new(0, 8, 0, 0),
+                        BackgroundTransparency = 1,
+                        Font = Enum.Font.GothamMedium,
+                        Text = plr.DisplayName .. " (@" .. plr.Name .. ")",
+                        TextColor3 = Theme.Text,
+                        TextSize = 10,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        Parent = PlrFrame,
+                    }), "TextColor3", "Text")
+
+                    -- TELEPORT BUTONU
+                    local TpBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 52, 0, 18),
+                        Position = UDim2.new(1, -114, 0.5, -9),
+                        BackgroundColor3 = Theme.Tertiary,
+                        Text = "🚀 TP",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 9,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = PlrFrame,
+                    })
+                    Themed(TpBtn, "BackgroundColor3", "Tertiary")
+                    Themed(TpBtn, "TextColor3", "Text")
+                    Themed(Stroke(TpBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    TpBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(TpBtn)
+                        PlaySound(Sounds.Click, 0.3)
+                        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                            Window:Notify({ Title = "Işınlanma", Content = plr.DisplayName .. " isimli oyuncunun yanına ışınlandınız.", Duration = 2 })
+                        else
+                            Window:Notify({ Title = "Hata", Content = "Oyuncunun karakteri bulunamadı!", Duration = 2 })
+                        end
+                    end)
+
+                    -- SPECTATE TOGGLE
+                    local isSpectating = (SpectatingPlayer == plr)
+                    local SpecBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 58, 0, 18),
+                        Position = UDim2.new(1, -58, 0.5, -9),
+                        BackgroundColor3 = isSpectating and Theme.Accent or Theme.Tertiary,
+                        Text = "👁️ Izle",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 9,
+                        TextColor3 = isSpectating and Color3.new(1,1,1) or Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = PlrFrame,
+                    })
+                    Themed(SpecBtn, "BackgroundColor3", isSpectating and "Accent" or "Tertiary")
+                    Themed(SpecBtn, "TextColor3", isSpectating and "Text" or "Text")
+                    Themed(Stroke(SpecBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    SpecBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(SpecBtn)
+                        PlaySound(Sounds.Toggle, 0.3)
+                        local Camera = workspace.CurrentCamera
+                        if SpectatingPlayer == plr then
+                            -- Spectate Kapat
+                            SpectatingPlayer = nil
+                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                                Camera.CameraSubject = LocalPlayer.Character.Humanoid
+                            end
+                            Tween(SpecBtn, { BackgroundColor3 = Theme.Tertiary }, 0.15)
+                            SpecBtn.TextColor3 = Theme.Text
+                            Window:Notify({ Title = "Kamera", Content = "Kendi karakterinize dönüldü.", Duration = 2 })
+                        else
+                            -- Spectate Aç
+                            if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                                SpectatingPlayer = plr
+                                Camera.CameraSubject = plr.Character.Humanoid
+                                Tween(SpecBtn, { BackgroundColor3 = Theme.Accent }, 0.15)
+                                SpecBtn.TextColor3 = Color3.new(1, 1, 1)
+                                Window:Notify({ Title = "İzleniyor", Content = plr.DisplayName .. " izleniyor...", Duration = 2 })
+                            else
+                                Window:Notify({ Title = "Hata", Content = "Oyuncu izlenemiyor!", Duration = 2 })
+                            end
+                        end
+                    end)
+                end
+            end
+        end
+
+        RefreshPlayerList()
+        Players.PlayerAdded:Connect(RefreshPlayerList)
+        Players.PlayerRemoving:Connect(function(plr)
+            if SpectatingPlayer == plr then
+                SpectatingPlayer = nil
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+                end
+            end
+            RefreshPlayerList()
+        end)
+    end
+
     function Window:AddTab(tabName)
         tabName = tabName or "Tab"
         local Tab = {}
@@ -842,13 +1119,16 @@ function Spectrum:AddWindow(config)
             Parent = ContentArea,
         })
         Themed(Page, "ScrollBarImageColor3", "Accent")
-        
+
         Create("UIListLayout", {
             Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
             Parent = Page,
         })
         Pad(Page, 0, 0, 6, 10)
+
+        -- Sayfanın en üstüne Otomatik Kontrol Paneli Ekleme
+        CreateControlPanel(Page)
 
         Tab.Button = TabButton
         Tab.Label = TabLabel
@@ -877,7 +1157,6 @@ function Spectrum:AddWindow(config)
             sectionName = sectionName or "Section"
             local Section = {}
 
-            -- Section eklenen elemanlara göre otomatik uzayacak şekilde ayarlandı
             local SectionOuter = Create("Frame", {
                 Size = UDim2.new(1, -6, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
@@ -918,7 +1197,7 @@ function Spectrum:AddWindow(config)
                 BorderSizePixel = 0,
                 Parent = SectionOuter,
             })
-            
+
             local EHLayout = Create("UIListLayout", {
                 Padding = UDim.new(0, 6),
                 SortOrder = Enum.SortOrder.LayoutOrder,
@@ -975,7 +1254,7 @@ function Spectrum:AddWindow(config)
                     AutoButtonColor = false,
                     Parent = Frame,
                 })
-                
+
                 local BtnLabel = Create("TextLabel", {
                     Size = UDim2.new(1, -20, 1, 0),
                     Position = UDim2.new(0, 12, 0, 0),
@@ -1013,7 +1292,6 @@ function Spectrum:AddWindow(config)
 
                 local API = { Instance = Frame }
 
-                -- Button için Keybind Ekleme Fonksiyonu
                 function API:AddKeybind(keyName)
                     local keyCode = Enum.KeyCode[keyName] or Enum.KeyCode.Unknown
                     local Listening = false
@@ -1100,7 +1378,7 @@ function Spectrum:AddWindow(config)
                 })
                 local SwitchStroke = Stroke(SwitchBG, Theme.Stroke, 1, 0.4)
                 Themed(SwitchStroke, "Color", "Stroke")
-                
+
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 16, 0, 16),
                     Position = State and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
@@ -1293,7 +1571,7 @@ function Spectrum:AddWindow(config)
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = Frame,
                 }), "TextColor3", "Text")
-                
+
                 local ValueLabel = Themed(Create("TextLabel", {
                     Size = UDim2.new(0, 50, 0, 20),
                     Position = UDim2.new(1, -58, 0, 4),
@@ -1313,14 +1591,14 @@ function Spectrum:AddWindow(config)
                     BorderSizePixel = 0,
                     Parent = Frame,
                 }), "BackgroundColor3", "Stroke")
-                
+
                 local Fill = Themed(Create("Frame", {
                     Size = UDim2.new((Value - Min) / (Max - Min), 0, 1, 0),
                     BackgroundColor3 = Theme.Accent,
                     BorderSizePixel = 0,
                     Parent = Track,
                 }), "BackgroundColor3", "Accent")
-                
+
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 12, 0, 12),
                     Position = UDim2.new((Value - Min) / (Max - Min), -6, 0.5, -6),
