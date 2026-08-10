@@ -217,7 +217,6 @@ function Spectrum:AddWindow(config)
     local WindowName       = config.Name or "Spectrum"
     local ThemeName         = config.Theme or "Aqua"
     local ToggleKeybind     = config.ToggleKeybind or Enum.KeyCode.RightControl
-    -- Menüyü Yatayda %15, Dikeyde %10 Genişletme (640->736, 440->484)
     local WindowSize         = config.Size or UDim2.new(0, 736, 0, 484)
     local GlobalNotifications = (config.Notifications == nil) and true or config.Notifications
     local KeySystemCfg       = config.KeySystem or { Enabled = false }
@@ -463,22 +462,20 @@ function Spectrum:AddWindow(config)
     })
     Window.NotifyHolder = NotifyHolder
 
-    -- S HARFİ KALDIRILMIŞ SADE VE AŞIRI MODERN TOGGLE BUTONU
     local ToggleButton = Create("TextButton", {
         Name = "ToggleButton",
         Size = UDim2.new(0, 36, 0, 36),
         Position = UDim2.new(0, 20, 0, 20),
         BackgroundColor3 = Theme.Background,
         BackgroundTransparency = 0.3,
-        Text = "", -- İçindeki kalın S harfi kaldırıldı.
+        Text = "",
         AutoButtonColor = false,
         Visible = ToggleButtonEnabled,
         Parent = ScreenGui,
     })
     Themed(ToggleButton, "BackgroundColor3", "Background")
     Themed(Stroke(ToggleButton, Theme.Accent, 1.5, 0.2), "Color", "Accent")
-    
-    -- İçine Estetik Bir Nokta/İkon Detayı
+
     local InnerDot = Create("Frame", {
         Size = UDim2.new(0, 10, 0, 10),
         Position = UDim2.new(0.5, -5, 0.5, -5),
@@ -684,7 +681,7 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- YENİLENMİŞ VE YÜKSEK KALİTELİ KEY LOGIN SCREEN
+    -- KEY LOGIN SCREEN
     --=====================================================================
     if KeySystemCfg.Enabled then
         local KeyOverlay = Create("Frame", {
@@ -712,7 +709,6 @@ function Spectrum:AddWindow(config)
 
         MakeDraggable(KeyScreen, KeyScreen)
 
-        -- Giriş Başlığı
         Themed(Create("TextLabel", {
             Size = UDim2.new(1, 0, 0, 26),
             BackgroundTransparency = 1,
@@ -738,7 +734,6 @@ function Spectrum:AddWindow(config)
             Parent = KeyScreen,
         }), "TextColor3", "SubText")
 
-        -- User Input Container
         local UserBoxFrame = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 36),
             Position = UDim2.new(0, 0, 0, 62),
@@ -777,7 +772,6 @@ function Spectrum:AddWindow(config)
         Themed(UserInput, "TextColor3", "Text")
         Themed(UserInput, "PlaceholderColor3", "SubText")
 
-        -- Pass Input Container
         local PassBoxFrame = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 36),
             Position = UDim2.new(0, 0, 0, 108),
@@ -816,7 +810,6 @@ function Spectrum:AddWindow(config)
         Themed(PassInput, "TextColor3", "Text")
         Themed(PassInput, "PlaceholderColor3", "SubText")
 
-        -- Login Button
         local SubmitBtn = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 38),
             Position = UDim2.new(0, 0, 0, 162),
@@ -995,7 +988,7 @@ function Spectrum:AddWindow(config)
                 Parent = SectionOuter,
             })
 
-            local EHLayout = Create("UIListLayout", {
+            Create("UIListLayout", {
                 Padding = UDim.new(0, 6),
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 Parent = ElementHolder,
@@ -1857,13 +1850,12 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- YENİ YÜKSEK KALİTELİ "STATS" SEKMESİ (ControlPanel = true ise oluşur)
+    -- STATS SEKMESİ (DÜZELTİLDİ: UIGridStyleLayout -> UIListLayout)
     --=====================================================================
     if ShowControlPanel then
         local StatsTab = Window:AddTab("📊 Stats")
         local SpectatingPlayer = nil
 
-        -- Toplam Panel Çerçevesi
         local PanelFrame = Create("Frame", {
             Name = "StatsPanelFrame",
             Size = UDim2.new(1, -6, 0, 420),
@@ -1876,7 +1868,7 @@ function Spectrum:AddWindow(config)
         Themed(Stroke(PanelFrame, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
         Pad(PanelFrame, 10, 10, 10, 10)
 
-        -- 1. ANLIK PERFORMANS METRİKLERİ KARTI (FPS, PING, MEMORY)
+        -- 1. ANLIK PERFORMANS METRİKLERİ KARTI
         local PerformanceCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 60),
             BackgroundColor3 = Theme.Tertiary,
@@ -1887,15 +1879,18 @@ function Spectrum:AddWindow(config)
         Themed(PerformanceCard, "BackgroundColor3", "Tertiary")
         Themed(Stroke(PerformanceCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-        local PerfLayout = Create("UIGridStyleLayout", {
-            Parent = PerformanceCard
+        -- DÜZELTME: UIGridStyleLayout yerine UIListLayout eklendi
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.SpaceEvenly,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = PerformanceCard,
         })
 
-        -- Metrik Oluşturma Yardımcı
-        local function CreateStatWidget(pos, title, defaultVal)
+        local function CreateStatWidget(title, defaultVal)
             local Box = Create("Frame", {
-                Size = UDim2.new(0.24, 0, 1, -12),
-                Position = pos,
+                Size = UDim2.new(0.23, 0, 1, -12),
                 BackgroundColor3 = Theme.Secondary,
                 BackgroundTransparency = 0.3,
                 BorderSizePixel = 0,
@@ -1931,12 +1926,11 @@ function Spectrum:AddWindow(config)
             return ValLabel
         end
 
-        local FpsLabel    = CreateStatWidget(UDim2.new(0.01, 0, 0, 6), "FPS", "60")
-        local PingLabel   = CreateStatWidget(UDim2.new(0.26, 0, 0, 6), "PING", "0 ms")
-        local MemLabel    = CreateStatWidget(UDim2.new(0.51, 0, 0, 6), "MEMORY", "0 MB")
-        local RecvLabel   = CreateStatWidget(UDim2.new(0.76, 0, 0, 6), "DATA RECV", "0 KB/s")
+        local FpsLabel    = CreateStatWidget("FPS", "60")
+        local PingLabel   = CreateStatWidget("PING", "0 ms")
+        local MemLabel    = CreateStatWidget("MEMORY", "0 MB")
+        local RecvLabel   = CreateStatWidget("DATA RECV", "0 KB/s")
 
-        -- Canlı Metrik Güncelleyici
         local lastUpdate = tick()
         local frameCount = 0
 
@@ -1949,11 +1943,10 @@ function Spectrum:AddWindow(config)
                 frameCount = 0
                 lastUpdate = now
 
-                -- Ping & Memory
                 pcall(function()
                     local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
                     PingLabel.Text = tostring(ping) .. " ms"
-                    
+
                     local mem = math.floor(StatsService:GetTotalMemoryUsageMb())
                     MemLabel.Text = tostring(mem) .. " MB"
 
@@ -2129,7 +2122,6 @@ function Spectrum:AddWindow(config)
                         Parent = PlrFrame,
                     }), "TextColor3", "Text")
 
-                    -- TELEPORT BUTONU
                     local TpBtn = Create("TextButton", {
                         Size = UDim2.new(0, 55, 0, 20),
                         Position = UDim2.new(1, -122, 0.5, -10),
@@ -2156,7 +2148,6 @@ function Spectrum:AddWindow(config)
                         end
                     end)
 
-                    -- SPECTATE TOGGLE
                     local isSpectating = (SpectatingPlayer == plr)
                     local SpecBtn = Create("TextButton", {
                         Size = UDim2.new(0, 60, 0, 20),
@@ -2170,7 +2161,7 @@ function Spectrum:AddWindow(config)
                         Parent = PlrFrame,
                     })
                     Themed(SpecBtn, "BackgroundColor3", isSpectating and "Accent" or "Tertiary")
-                    Themed(SpecBtn, "TextColor3", isSpectating and "Text" or "Text")
+                    Themed(SpecBtn, "TextColor3", "Text")
                     Themed(Stroke(SpecBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
                     SpecBtn.MouseButton1Click:Connect(function()
