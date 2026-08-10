@@ -1853,7 +1853,7 @@ function Spectrum:AddWindow(config)
     -- STATS SEKMESİ (DÜZELTİLDİ: Enum.HorizontalAlignment.Center kullanıldı)
     --=====================================================================
     if ShowControlPanel then
-        local StatsTab = Window:AddTab("📊 Stats")
+        local StatsTab = Window:AddTab("Dashboard")
         local SpectatingPlayer = nil
 
         local PanelFrame = Create("Frame", {
