@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.9.3 (Two-Column Layout Fix)
+    SPECTRUM UI LIBRARY  |  v3.9.4 (Enhanced Dashboard & Clipboard Fix)
     ============================================================
 ]]
 
@@ -12,6 +12,7 @@ local Debris             = game:GetService("Debris")
 local MarketplaceService = game:GetService("MarketplaceService")
 local StatsService       = game:GetService("Stats")
 local RunService         = game:GetService("RunService")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
@@ -166,6 +167,17 @@ local function ClickBounce(obj)
     end)
 end
 
+local function CopyToClipboard(text)
+    if setclipboard then
+        setclipboard(tostring(text))
+        return true
+    elseif toclipboard then
+        toclipboard(tostring(text))
+        return true
+    end
+    return false
+end
+
 local function MakeDraggable(frame, handle)
     local dragging, dragInput, dragStart, startPos
     handle.InputBegan:Connect(function(input)
@@ -206,7 +218,7 @@ function Spectrum:AddWindow(config)
     local WindowName       = config.Name or "Spectrum"
     local ThemeName         = config.Theme or "Aqua"
     local ToggleKeybind     = config.ToggleKeybind or Enum.KeyCode.RightControl
-    local WindowSize         = config.Size or UDim2.new(0, 736, 0, 484)
+    local WindowSize         = config.Size or UDim2.new(0, 736, 0, 520)
     local GlobalNotifications = (config.Notifications == nil) and true or config.Notifications
     local KeySystemCfg       = config.KeySystem or { Enabled = false }
     local ToggleButtonEnabled = (config.ToggleButton == nil) and true or config.ToggleButton
@@ -410,7 +422,7 @@ function Spectrum:AddWindow(config)
         Position = UDim2.new(1, -108, 1, -16),
         BackgroundTransparency = 1,
         Font = Enum.Font.Gotham,
-        Text = "Spectrum v3.9.2",
+        Text = "Spectrum v3.9.4",
         TextColor3 = Theme.SubText,
         TextTransparency = 0.4,
         TextSize = 9,
@@ -1893,7 +1905,7 @@ function Spectrum:AddWindow(config)
 
         local PanelFrame = Create("Frame", {
             Name = "StatsPanelFrame",
-            Size = UDim2.new(1, -6, 0, 560),
+            Size = UDim2.new(1, -6, 0, 680),
             BackgroundColor3 = Theme.Secondary,
             BackgroundTransparency = 0.12,
             BorderSizePixel = 0,
@@ -2067,9 +2079,9 @@ function Spectrum:AddWindow(config)
         local lastUpdate = tick()
         local frameCount = 0
 
-        -- 3. PROFILE CARD
+        -- 3. PROFILE CARD (Gelişmiş Kopyalanabilir Bilgiler & ClientId)
         local ProfileCard = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 60),
+            Size = UDim2.new(1, 0, 0, 110),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.1,
             BorderSizePixel = 0,
@@ -2077,10 +2089,11 @@ function Spectrum:AddWindow(config)
         })
         Themed(ProfileCard, "BackgroundColor3", "Tertiary")
         Themed(Stroke(ProfileCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+        Pad(ProfileCard, 8, 8, 8, 8)
 
         local AvatarImg = Create("ImageLabel", {
-            Size = UDim2.new(0, 46, 0, 46),
-            Position = UDim2.new(0, 7, 0.5, -23),
+            Size = UDim2.new(0, 48, 0, 48),
+            Position = UDim2.new(0, 4, 0, 4),
             BackgroundColor3 = Theme.Secondary,
             BackgroundTransparency = 0.5,
             Image = "rbxassetid://0",
@@ -2096,60 +2109,103 @@ function Spectrum:AddWindow(config)
             end
         end)
 
-        Themed(Create("TextLabel", {
-            Size = UDim2.new(0.5, -60, 0, 18),
-            Position = UDim2.new(0, 60, 0, 10),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.GothamBold,
-            Text = LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")",
-            TextColor3 = Theme.Text,
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTruncate = Enum.TextTruncate.AtEnd,
-            Parent = ProfileCard,
-        }), "TextColor3", "Text")
+        local ClientIdStr = "N/A"
+        pcall(function()
+            ClientIdStr = RbxAnalyticsService:GetClientId()
+        end)
 
-        Themed(Create("TextLabel", {
-            Size = UDim2.new(0.5, -60, 0, 14),
-            Position = UDim2.new(0, 60, 0, 30),
+        local ProfileInfoFrame = Create("Frame", {
+            Size = UDim2.new(1, -190, 1, 0),
+            Position = UDim2.new(0, 60, 0, 0),
             BackgroundTransparency = 1,
-            Font = Enum.Font.Gotham,
-            Text = "User ID: " .. tostring(LocalPlayer.UserId),
-            TextColor3 = Theme.SubText,
-            TextSize = 10,
-            TextXAlignment = Enum.TextXAlignment.Left,
             Parent = ProfileCard,
-        }), "TextColor3", "SubText")
+        })
+        Create("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder, Parent = ProfileInfoFrame })
 
+        local function AddCopyableInfoRow(title, value)
+            local Row = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 20),
+                BackgroundTransparency = 1,
+                Parent = ProfileInfoFrame,
+            })
+
+            local Lbl = Themed(Create("TextLabel", {
+                Size = UDim2.new(1, -26, 1, 0),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.GothamMedium,
+                Text = title .. ": " .. tostring(value),
+                TextColor3 = Theme.Text,
+                TextSize = 10,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                Parent = Row,
+            }), "TextColor3", "Text")
+
+            local CopyBtn = Create("TextButton", {
+                Size = UDim2.new(0, 20, 0, 18),
+                Position = UDim2.new(1, -20, 0, 1),
+                BackgroundColor3 = Theme.Secondary,
+                Text = "📋",
+                Font = Enum.Font.Gotham,
+                TextSize = 10,
+                AutoButtonColor = false,
+                Parent = Row,
+            })
+            Themed(CopyBtn, "BackgroundColor3", "Secondary")
+            Themed(Stroke(CopyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+            CopyBtn.MouseButton1Click:Connect(function()
+                ClickBounce(CopyBtn)
+                PlaySound(Sounds.Click, 0.3)
+                if CopyToClipboard(value) then
+                    Window:Notify({ Title = "Kopyalandı!", Content = title .. " panoya kopyalandı.", Duration = 2 })
+                end
+            end)
+        end
+
+        AddCopyableInfoRow("Display Name", LocalPlayer.DisplayName)
+        AddCopyableInfoRow("Username", "@" .. LocalPlayer.Name)
+        AddCopyableInfoRow("User ID", LocalPlayer.UserId)
+        AddCopyableInfoRow("Client ID", ClientIdStr)
+
+        -- Place Info Box
         local PlaceName = "Yükleniyor..."
         pcall(function()
             local info = MarketplaceService:GetProductInfo(game.PlaceId)
             if info and info.Name then PlaceName = info.Name end
         end)
 
+        local PlaceBox = Create("Frame", {
+            Size = UDim2.new(0, 120, 1, 0),
+            Position = UDim2.new(1, -120, 0, 0),
+            BackgroundTransparency = 1,
+            Parent = ProfileCard,
+        })
+
         Themed(Create("TextLabel", {
-            Size = UDim2.new(0.45, 0, 0, 16),
-            Position = UDim2.new(0.53, 0, 0, 10),
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.new(0, 0, 0, 4),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
             Text = "🎮 " .. PlaceName,
             TextColor3 = Theme.Accent,
-            TextSize = 11,
+            TextSize = 10,
+            TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Right,
-            TextTruncate = Enum.TextTruncate.AtEnd,
-            Parent = ProfileCard,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            Parent = PlaceBox,
         }), "TextColor3", "Accent")
 
         local CopyPlaceBtn = Create("TextButton", {
-            Size = UDim2.new(0, 120, 0, 20),
-            Position = UDim2.new(1, -128, 0, 30),
+            Size = UDim2.new(1, 0, 0, 22),
+            Position = UDim2.new(0, 0, 1, -24),
             BackgroundColor3 = Theme.Secondary,
-            Text = "📋 ID: " .. tostring(game.PlaceId),
+            Text = "📋 Place ID: " .. tostring(game.PlaceId),
             Font = Enum.Font.GothamMedium,
             TextSize = 9,
             TextColor3 = Theme.SubText,
             AutoButtonColor = false,
-            Parent = ProfileCard,
+            Parent = PlaceBox,
         })
         Themed(CopyPlaceBtn, "BackgroundColor3", "Secondary")
         Themed(CopyPlaceBtn, "TextColor3", "SubText")
@@ -2158,15 +2214,14 @@ function Spectrum:AddWindow(config)
         CopyPlaceBtn.MouseButton1Click:Connect(function()
             ClickBounce(CopyPlaceBtn)
             PlaySound(Sounds.Click, 0.3)
-            if setclipboard then
-                setclipboard(tostring(game.PlaceId))
+            if CopyToClipboard(game.PlaceId) then
                 Window:Notify({ Title = "Kopyalandı!", Content = "Place ID panoya kopyalandı.", Duration = 2 })
             end
         end)
 
-        -- 4. PLAYER LIST & VIEW / TELEPORT
+        -- 4. PLAYER LIST & VIEW / TELEPORT / COPY
         local PlayerListCard = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 140),
+            Size = UDim2.new(1, 0, 0, 160),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.1,
             BorderSizePixel = 0,
@@ -2209,7 +2264,7 @@ function Spectrum:AddWindow(config)
             for _, targetPlayer in ipairs(Players:GetPlayers()) do
                 if targetPlayer ~= LocalPlayer then
                     local pRow = Create("Frame", {
-                        Size = UDim2.new(1, -4, 0, 28),
+                        Size = UDim2.new(1, -4, 0, 32),
                         BackgroundColor3 = Theme.Secondary,
                         BackgroundTransparency = 0.2,
                         Parent = PlayerScroll,
@@ -2218,7 +2273,7 @@ function Spectrum:AddWindow(config)
                     Themed(Stroke(pRow, Theme.Stroke, 1, 0.4), "Color", "Stroke")
 
                     Themed(Create("TextLabel", {
-                        Size = UDim2.new(1, -130, 1, 0),
+                        Size = UDim2.new(1, -210, 1, 0),
                         Position = UDim2.new(0, 8, 0, 0),
                         BackgroundTransparency = 1,
                         Font = Enum.Font.GothamMedium,
@@ -2230,10 +2285,82 @@ function Spectrum:AddWindow(config)
                         Parent = pRow,
                     }), "TextColor3", "Text")
 
+                    -- Copy Dropdown/Action Menu
+                    local CopyMenuBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 50, 0, 22),
+                        Position = UDim2.new(1, -204, 0.5, -11),
+                        BackgroundColor3 = Theme.Tertiary,
+                        Text = "📋 Kopyala",
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 8,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = pRow,
+                    })
+                    Themed(CopyMenuBtn, "BackgroundColor3", "Tertiary")
+                    Themed(CopyMenuBtn, "TextColor3", "Text")
+                    Themed(Stroke(CopyMenuBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    local CopyListFrame = Create("Frame", {
+                        Size = UDim2.new(0, 120, 0, 0),
+                        BackgroundColor3 = Theme.Secondary,
+                        BackgroundTransparency = 0.05,
+                        BorderSizePixel = 0,
+                        ClipsDescendants = true,
+                        AutomaticSize = Enum.AutomaticSize.Y,
+                        Visible = false,
+                        ZIndex = 60,
+                        Parent = Overlay,
+                    })
+                    Themed(CopyListFrame, "BackgroundColor3", "Secondary")
+                    Themed(Stroke(CopyListFrame, Theme.Stroke, 1, 0.2), "Color", "Stroke")
+                    Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = CopyListFrame })
+                    Pad(CopyListFrame, 4, 4, 4, 4)
+
+                    local copyOptions = {
+                        { Name = "Display Name", Val = targetPlayer.DisplayName },
+                        { Name = "Username", Val = targetPlayer.Name },
+                        { Name = "User ID", Val = targetPlayer.UserId },
+                    }
+
+                    for _, opt in ipairs(copyOptions) do
+                        local OptBtn = Create("TextButton", {
+                            Size = UDim2.new(1, 0, 0, 20),
+                            BackgroundColor3 = Theme.Tertiary,
+                            BackgroundTransparency = 1,
+                            Text = " " .. opt.Name,
+                            Font = Enum.Font.Gotham,
+                            TextSize = 10,
+                            TextColor3 = Theme.Text,
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                            AutoButtonColor = false,
+                            ZIndex = 61,
+                            Parent = CopyListFrame,
+                        })
+                        Themed(OptBtn, "TextColor3", "Text")
+
+                        OptBtn.MouseButton1Click:Connect(function()
+                            PlaySound(Sounds.Click, 0.25)
+                            if CopyToClipboard(opt.Val) then
+                                Window:Notify({ Title = "Kopyalandı!", Content = targetPlayer.Name .. " (" .. opt.Name .. ") kopyalandı.", Duration = 2 })
+                            end
+                            ClosePopup(CopyListFrame)
+                        end)
+                    end
+
+                    CopyMenuBtn.MouseButton1Click:Connect(function()
+                        PlaySound(Sounds.Click, 0.3)
+                        if CopyListFrame.Visible then
+                            ClosePopup(CopyListFrame)
+                        else
+                            OpenPopup(CopyListFrame, CopyMenuBtn, 4, 120, "right")
+                        end
+                    end)
+
                     -- Teleport Button
                     local TpBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 52, 0, 20),
-                        Position = UDim2.new(1, -116, 0.5, -10),
+                        Size = UDim2.new(0, 70, 0, 22),
+                        Position = UDim2.new(1, -148, 0.5, -11),
                         BackgroundColor3 = Theme.Accent,
                         Text = "Teleport",
                         Font = Enum.Font.GothamBold,
@@ -2258,8 +2385,8 @@ function Spectrum:AddWindow(config)
 
                     -- View Toggle Button
                     local ViewBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 52, 0, 20),
-                        Position = UDim2.new(1, -58, 0.5, -10),
+                        Size = UDim2.new(0, 70, 0, 22),
+                        Position = UDim2.new(1, -72, 0.5, -11),
                         BackgroundColor3 = Theme.Tertiary,
                         Text = "View",
                         Font = Enum.Font.GothamBold,
@@ -2299,9 +2426,9 @@ function Spectrum:AddWindow(config)
         Players.PlayerAdded:Connect(RefreshPlayerList)
         Players.PlayerRemoving:Connect(RefreshPlayerList)
 
-        -- 5. POSITION, CFRAME, VELOCITY MONİTÖRÜ
+        -- 5. POSITION, CFRAME, VELOCITY MONİTÖRÜ (Kopyalanabilir)
         local PhysicsCard = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 80),
+            Size = UDim2.new(1, 0, 0, 95),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.1,
             BorderSizePixel = 0,
@@ -2322,41 +2449,73 @@ function Spectrum:AddWindow(config)
             Parent = PhysicsCard,
         }), "TextColor3", "Text")
 
-        local PosLabel = Themed(Create("TextLabel", {
-            Size = UDim2.new(1, 0, 0, 14),
-            Position = UDim2.new(0, 0, 0, 20),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Gotham,
-            Text = "Position: X: 0 | Y: 0 | Z: 0",
-            TextColor3 = Theme.SubText,
-            TextSize = 9,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = PhysicsCard,
-        }), "TextColor3", "SubText")
+        local rawPosStr = "0, 0, 0"
+        local rawCFStr  = "0, 0, 0, 1, 0, 0, 0, 1, 0"
+        local rawVelStr = "0, 0, 0"
 
-        local CFrameLabel = Themed(Create("TextLabel", {
-            Size = UDim2.new(1, 0, 0, 14),
-            Position = UDim2.new(0, 0, 0, 36),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Gotham,
-            Text = "CFrame: 0, 0, 0, 1, 0, 0, 0, 1, 0",
-            TextColor3 = Theme.SubText,
-            TextSize = 9,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = PhysicsCard,
-        }), "TextColor3", "SubText")
+        local function CreatePhysicsRow(yPos, defaultText)
+            local Row = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 20),
+                Position = UDim2.new(0, 0, 0, yPos),
+                BackgroundTransparency = 1,
+                Parent = PhysicsCard,
+            })
 
-        local VelLabel = Themed(Create("TextLabel", {
-            Size = UDim2.new(1, 0, 0, 14),
-            Position = UDim2.new(0, 0, 0, 52),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Gotham,
-            Text = "Velocity: X: 0 | Y: 0 | Z: 0 (Hız: 0)",
-            TextColor3 = Theme.SubText,
-            TextSize = 9,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = PhysicsCard,
-        }), "TextColor3", "SubText")
+            local Lbl = Themed(Create("TextLabel", {
+                Size = UDim2.new(1, -30, 1, 0),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.Gotham,
+                Text = defaultText,
+                TextColor3 = Theme.SubText,
+                TextSize = 9,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                Parent = Row,
+            }), "TextColor3", "SubText")
+
+            local CopyBtn = Create("TextButton", {
+                Size = UDim2.new(0, 22, 0, 18),
+                Position = UDim2.new(1, -22, 0, 1),
+                BackgroundColor3 = Theme.Secondary,
+                Text = "📋",
+                Font = Enum.Font.Gotham,
+                TextSize = 9,
+                AutoButtonColor = false,
+                Parent = Row,
+            })
+            Themed(CopyBtn, "BackgroundColor3", "Secondary")
+            Themed(Stroke(CopyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+            return Lbl, CopyBtn
+        end
+
+        local PosLabel, CopyPosBtn = CreatePhysicsRow(20, "Position: X: 0 | Y: 0 | Z: 0")
+        local CFrameLabel, CopyCFBtn = CreatePhysicsRow(42, "CFrame: 0, 0, 0, 1, 0, 0, 0, 1, 0")
+        local VelLabel, CopyVelBtn = CreatePhysicsRow(64, "Velocity: X: 0 | Y: 0 | Z: 0 (Hız: 0)")
+
+        CopyPosBtn.MouseButton1Click:Connect(function()
+            ClickBounce(CopyPosBtn)
+            PlaySound(Sounds.Click, 0.3)
+            if CopyToClipboard(rawPosStr) then
+                Window:Notify({ Title = "Kopyalandı!", Content = "Position verisi kopyalandı.", Duration = 2 })
+            end
+        end)
+
+        CopyCFBtn.MouseButton1Click:Connect(function()
+            ClickBounce(CopyCFBtn)
+            PlaySound(Sounds.Click, 0.3)
+            if CopyToClipboard(rawCFStr) then
+                Window:Notify({ Title = "Kopyalandı!", Content = "CFrame verisi kopyalandı.", Duration = 2 })
+            end
+        end)
+
+        CopyVelBtn.MouseButton1Click:Connect(function()
+            ClickBounce(CopyVelBtn)
+            PlaySound(Sounds.Click, 0.3)
+            if CopyToClipboard(rawVelStr) then
+                Window:Notify({ Title = "Kopyalandı!", Content = "Velocity verisi kopyalandı.", Duration = 2 })
+            end
+        end)
 
         -- 6. ENVANTER TOOL MONİTÖRÜ
         local InventoryCard = Create("Frame", {
@@ -2477,6 +2636,10 @@ function Spectrum:AddWindow(config)
                     local pos = hrp.Position
                     local cf = hrp.CFrame
                     local vel = hrp.Velocity
+
+                    rawPosStr = string.format("%.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
+                    rawCFStr = tostring(cf)
+                    rawVelStr = string.format("%.2f, %.2f, %.2f", vel.X, vel.Y, vel.Z)
 
                     PosLabel.Text = string.format("Position: X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
                     CFrameLabel.Text = string.format("CFrame: %.1f, %.1f, %.1f", cf.X, cf.Y, cf.Z)
