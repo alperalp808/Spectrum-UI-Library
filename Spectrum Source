@@ -2101,3 +2101,4 @@ function Spectrum:AddWindow(config)
 end
 
 return Spectrum
+--11
