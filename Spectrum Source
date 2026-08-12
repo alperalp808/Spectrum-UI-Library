@@ -2,16 +2,16 @@
     ============================================================
     SPECTRUM UI LIBRARY  |  v3.7.0 (2-Column Tab Support Edition)
     ============================================================
-    
+
     YENİ ÖZELLİK: Tab'lara 2Sec parametresi ile iki sütunlu layout desteği
-    
+
     Kullanım:
     local Tab = Window:AddTab("İsim", true)  -- 2 sütun aktif
     local RightSection = Tab:AddSection("Sağ Bölüm", "Right")
     local LeftSection = Tab:AddSection("Sol Bölüm", "Left")
-    
+
     OR
-    
+
     local Tab = Window:AddTab("İsim", false)  -- Normal tek sütun
     local Section = Tab:AddSection("Bölüm")
 ]]
@@ -886,7 +886,7 @@ function Spectrum:AddWindow(config)
     function Window:AddTab(tabName, twoColumnMode)
         tabName = tabName or "Tab"
         twoColumnMode = twoColumnMode or false
-        
+
         local Tab = {}
         Tab.Sections = {}
         Tab.TwoColumnMode = twoColumnMode
@@ -941,7 +941,7 @@ function Spectrum:AddWindow(config)
             })
             Create("UIListLayout", {
                 FillDirection = Enum.FillDirection.Horizontal,
-                HorizontalAlignment = Enum.HorizontalAlignment.SpaceBetween,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
                 VerticalAlignment = Enum.VerticalAlignment.Top,
                 Padding = UDim.new(0, 6),
                 SortOrder = Enum.SortOrder.LayoutOrder,
@@ -984,7 +984,7 @@ function Spectrum:AddWindow(config)
         function Tab:AddSection(sectionName, alignment)
             sectionName = sectionName or "Section"
             alignment = alignment or "Single"  -- "Left", "Right", veya "Single"
-            
+
             local Section = {}
 
             local SectionOuter = Create("Frame", {
@@ -2101,4 +2101,3 @@ function Spectrum:AddWindow(config)
 end
 
 return Spectrum
---11
