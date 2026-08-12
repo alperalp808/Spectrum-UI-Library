@@ -1850,7 +1850,7 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- STATS SEKMESİ (DÜZELTİLDİ: Enum.HorizontalAlignment.Center kullanıldı)
+    -- STATS SEKMESİ (DÜZELTİLDİ VE TAMAMLANDI)
     --=====================================================================
     if ShowControlPanel then
         local StatsTab = Window:AddTab("Dashboard")
@@ -1879,7 +1879,6 @@ function Spectrum:AddWindow(config)
         Themed(PerformanceCard, "BackgroundColor3", "Tertiary")
         Themed(Stroke(PerformanceCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-        -- HATA BURADAYDI: SpaceEvenly -> Center olarak güncellendi
         Create("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
             HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -2124,10 +2123,10 @@ function Spectrum:AddWindow(config)
                     }), "TextColor3", "Text")
 
                     local SpecBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 60, 0, 20),
+                        Size = UDim2.new(0, 58, 0, 20),
                         Position = UDim2.new(1, -125, 0.5, -10),
-                        BackgroundColor3 = SpectatingPlayer == plr and Theme.Accent or Theme.Tertiary,
-                        Text = SpectatingPlayer == plr and "Unspec" or "Spec",
+                        BackgroundColor3 = (SpectatingPlayer == plr) and Theme.Accent or Theme.Tertiary,
+                        Text = (SpectatingPlayer == plr) and "Unspec" or "Spectate",
                         Font = Enum.Font.GothamBold,
                         TextSize = 9,
                         TextColor3 = Theme.Text,
@@ -2136,6 +2135,21 @@ function Spectrum:AddWindow(config)
                     })
                     Themed(SpecBtn, "TextColor3", "Text")
                     Themed(Stroke(SpecBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    local TeleportBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 58, 0, 20),
+                        Position = UDim2.new(1, -62, 0.5, -10),
+                        BackgroundColor3 = Theme.Tertiary,
+                        Text = "Teleport",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 9,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = PlrFrame,
+                    })
+                    Themed(TeleportBtn, "BackgroundColor3", "Tertiary")
+                    Themed(TeleportBtn, "TextColor3", "Text")
+                    Themed(Stroke(TeleportBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
                     SpecBtn.MouseButton1Click:Connect(function()
                         ClickBounce(SpecBtn)
@@ -2146,38 +2160,21 @@ function Spectrum:AddWindow(config)
                             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                                 camera.CameraSubject = LocalPlayer.Character.Humanoid
                             end
-                            SpecBtn.Text = "Spec"
-                            SpecBtn.BackgroundColor3 = Theme.Tertiary
                         else
                             SpectatingPlayer = plr
                             if plr.Character and plr.Character:FindFirstChild("Humanoid") then
                                 camera.CameraSubject = plr.Character.Humanoid
                             end
-                            RefreshPlayerList()
                         end
+                        RefreshPlayerList()
                     end)
 
-                    local TPBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 55, 0, 20),
-                        Position = UDim2.new(1, -60, 0.5, -10),
-                        BackgroundColor3 = Theme.Tertiary,
-                        Text = "Teleport",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 9,
-                        TextColor3 = Theme.Text,
-                        AutoButtonColor = false,
-                        Parent = PlrFrame,
-                    })
-                    Themed(TPBtn, "BackgroundColor3", "Tertiary")
-                    Themed(TPBtn, "TextColor3", "Text")
-                    Themed(Stroke(TPBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-
-                    TPBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(TPBtn)
+                    TeleportBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(TeleportBtn)
                         PlaySound(Sounds.Click, 0.3)
                         if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                            Window:Notify({ Title = "Işınlanıldı", Content = plr.Name .. " isimli oyuncunun yanına ışınlanıldı.", Duration = 2 })
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
+                            Window:Notify({ Title = "Teleport", Content = plr.DisplayName .. " adlı oyuncuya ışınlanıldı.", Duration = 2 })
                         end
                     end)
                 end
@@ -2185,7 +2182,17 @@ function Spectrum:AddWindow(config)
         end
 
         Players.PlayerAdded:Connect(RefreshPlayerList)
-        Players.PlayerRemoving:Connect(RefreshPlayerList)
+        Players.PlayerRemoving:Connect(function(plr)
+            if SpectatingPlayer == plr then
+                SpectatingPlayer = nil
+                local camera = workspace.CurrentCamera
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    camera.CameraSubject = LocalPlayer.Character.Humanoid
+                end
+            end
+            RefreshPlayerList()
+        end)
+
         RefreshPlayerList()
     end
 
