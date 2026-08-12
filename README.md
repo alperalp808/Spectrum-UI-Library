@@ -1,65 +1,90 @@
-# Spectrum UI v3.7.0 — Test Panel
+# Spectrum UI Library — v3.7.0
 
-A comprehensive usage guide and feature overview for the Spectrum UI test script, showcasing the library's **Two-Column layout system**, standard single-column tabs, and the full set of available UI components.
+**Two-Column Tab Support Edition**
 
----
-
-## 📖 Overview
-
-This script demonstrates every major feature of the Spectrum UI library, including:
-
-- ✅ Two-column tabs (Left/Right sections)
-- ✅ Standard single-column tabs
-- ✅ All UI elements (Button, Toggle, Slider, Dropdown, Textbox, Colorpicker, Keybind)
-- ✅ Theme system (7 built-in themes)
-- ✅ Notification system
-- ✅ Optional Key System (login gate)
+An English usage guide and introduction to the Spectrum UI library — a Lua-based interface framework for building draggable, themeable windows with tabs, sections, and a full set of interactive controls.
 
 ---
 
-## 🚀 Getting Started
+## ✨ Highlights
 
-### Loading the Library
+- 🆕 **Two-column tab layout** — split a tab's content into Left/Right sections
+- 🎨 **7 built-in themes** — `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light`, switchable live at runtime
+- 🔔 **Built-in notification system** with slide-in/out animations
+- 🔐 **Optional Key System** login screen (username/password gate)
+- ⌨️ **Keybind support** on buttons, toggles, and standalone keybind elements
+- 📊 **Optional Dashboard tab** showing FPS, ping, memory usage, network data, and player/place info
+- 🖱️ Draggable window and floating toggle button
+- 🎬 Smooth tweened animations throughout (open/close, hover, click bounce, popups)
 
-The script attempts to load Spectrum UI from a remote source, falling back to a local file if the online source is unavailable:
+---
+
+## 📦 Installation
+
+Spectrum UI is a single Lua module that returns a library table. Load it with `loadstring`, typically from a URL, and call `AddWindow` to get started:
 
 ```lua
-local Spectrum = loadstring(game:HttpGet("<library URL>"))()
+local Spectrum = loadstring(game:HttpGet("<raw-source-url>"))()
 
-if not Spectrum then
-    Spectrum = loadstring(readfile("spectrum_updated.lua"))()
-end
-```
-
-### Creating the Main Window
-
-```lua
 local Window = Spectrum:AddWindow({
-    Name = "Spectrum UI v3.7.0 | Test Panel",
+    Name = "My Panel",
     Theme = "Aqua",
-    ToggleKeybind = Enum.KeyCode.RightControl,
-    Size = UDim2.new(0, 840, 0, 520),
-    Notifications = true,
-    ControlPanel = true,
-    KeySystem = { Enabled = false, ... }
 })
 ```
 
-| Parameter | Description |
+---
+
+## 🪟 Creating a Window
+
+```lua
+local Window = Spectrum:AddWindow({
+    Name = "My Panel",              -- Window title
+    Theme = "Aqua",                 -- Green | Dark | Foggy | Sun | Aqua | Crimson | Light
+    ToggleKeybind = Enum.KeyCode.RightControl,
+    Size = UDim2.new(0, 736, 0, 484),
+    Notifications = true,           -- Global notification switch
+    ControlPanel = true,            -- Adds a built-in "Dashboard" tab
+    ToggleButton = true,            -- Floating show/hide button
+    KeySystem = {
+        Enabled = false,
+        Title = "Spectrum Security",
+        Note = "Please enter your credentials.",
+        Users = { { User = "admin", Pass = "1234" } }
+    }
+})
+```
+
+### Window options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `Name` | string | `"Spectrum"` | Text shown in the top bar |
+| `Theme` | string | `"Aqua"` | Initial theme name |
+| `ToggleKeybind` | `Enum.KeyCode` | `RightControl` | Key that shows/hides the window |
+| `Size` | `UDim2` | `0,736,0,484` | Window size |
+| `Notifications` | boolean | `true` | Master switch for `Window:Notify()` |
+| `ControlPanel` | boolean | `true` | Adds an automatic Dashboard tab |
+| `ToggleButton` | boolean | `true` | Shows a small draggable floating toggle button |
+| `KeySystem` | table | `{Enabled=false}` | Optional login gate, see below |
+
+### Window methods
+
+| Method | Description |
 |---|---|
-| `Name` | Window title text |
-| `Theme` | One of `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light` |
-| `ToggleKeybind` | Key used to show/hide the whole window |
-| `Size` | Window dimensions (`UDim2`) |
-| `Notifications` | Enables the global notification system |
-| `ControlPanel` | Enables the built-in control panel |
-| `KeySystem` | Optional login/authentication gate before the UI loads |
+| `Window:Show()` | Opens the window with a spring animation |
+| `Window:Close()` | Closes (hides) the window |
+| `Window:Toggle()` | Shows if hidden, hides if shown |
+| `Window:Destroy()` | Fully removes the UI from the game |
+| `Window:SetTheme(name)` | Switches every themed element live |
+| `Window:SetToggleKeybind(keyCode)` | Changes the show/hide hotkey |
+| `Window:Notify({Title, Content, Duration})` | Fires a toast notification |
+| `Window:AddTab(name, twoColumn)` | Creates a new tab, returns a `Tab` object |
 
 ---
 
-## 🔑 Key System (Optional)
+## 🔐 Key System (Login Gate)
 
-The Key System adds a login screen requiring a username/password before the window becomes accessible. Useful for gating access to the panel.
+When `KeySystem.Enabled = true`, a centered login card appears before the main window, requiring a matching username/password pair from the `Users` list. Only after a correct match does `Window.Authenticated` become `true` and the window auto-opens.
 
 ```lua
 KeySystem = {
@@ -67,163 +92,181 @@ KeySystem = {
     Title = "Spectrum Security",
     Note = "Please enter your credentials.",
     Users = {
-        { User = "admin", Pass = "1234" }
+        { User = "admin", Pass = "1234" },
+        { User = "user",  Pass = "spectrum2026" },
     }
 }
 ```
 
-Set `Enabled = false` during testing/development.
+Incorrect credentials flash the password field red and clear it; correct credentials play a success sound and animate the login card away.
 
 ---
 
 ## 🗂️ Tabs
 
-Tabs are created with `Window:AddTab(name, twoColumn)`. The second argument determines the layout:
-
 ```lua
-local TwoColumnTab   = Window:AddTab("📊 Two-Column Mode", true)
-local SingleColumnTab = Window:AddTab("🎛️ Single-Column Mode", false)
+local Tab = Window:AddTab("My Tab", true)   -- two-column layout
+local Tab = Window:AddTab("My Tab", false)  -- standard single-column layout
 ```
 
-- `true` → enables the **two-column** layout (Left/Right sections)
-- `false` → standard **single-column** layout
+The second argument controls layout mode:
 
-This test panel defines four tabs:
+- **`true`** → the tab's page becomes a horizontal flex container; sections created with `"Left"` or `"Right"` sit side by side, each taking roughly half the width.
+- **`false`** (or omitted) → sections stack vertically in a single column, the default behavior.
 
-| Tab | Layout | Purpose |
+---
+
+## 📐 Sections
+
+Sections are card-style containers with a title, an accent underline, and an internal list of components.
+
+```lua
+local Section = Tab:AddSection("Section Name", alignment)
+```
+
+| `alignment` | Effect | Valid only when |
 |---|---|---|
-| 📊 Two-Column Mode | Two-column | Demonstrates Left/Right sections |
-| 🎛️ Single-Column Mode | Single-column | Standard sequential controls |
-| ⚙️ Settings | Single-column | Theme selector + keybind management |
-| 🚀 Advanced | Single-column | System info, notification demos, live demo |
+| `"Left"` | Placed in the left half | Tab created with `twoColumn = true` |
+| `"Right"` | Placed in the right half | Tab created with `twoColumn = true` |
+| `"Single"` / omitted | Full-width, stacked normally | Any tab |
 
 ---
 
-## 📊 Two-Column Layout
+## 🎛️ Components Reference
 
-When a tab is created with `true`, use the `"Left"` and `"Right"` identifiers to split content into two side-by-side sections:
+All components live on a `Section` object and return an **API table** you can use afterward (`:Set()`, `:Get()`, etc. where applicable).
 
-```lua
-local LeftSection  = TwoColumnTab:AddSection("⬅️ Left Section", "Left")
-local RightSection = TwoColumnTab:AddSection("➡️ Right Section", "Right")
-```
-
-**Left Section** contains: a label, two buttons, a toggle, a slider, and a textbox.
-**Right Section** contains: a label, a colorpicker, a single-select dropdown, a multi-select dropdown, and a toggle.
-
----
-
-## 🎛️ UI Components Reference
-
-### Label
+### AddLabel
 ```lua
 Section:AddLabel({ Text = "Some descriptive text" })
 ```
+`API:Set(text)` updates the label text.
 
-### Button
+### AddButton
 ```lua
-Section:AddButton({
-    Name = "Button Name",
+local Btn = Section:AddButton({
+    Name = "My Button",
     Notifications = true,
     Callback = function() end
 })
+Btn:AddKeybind("F")  -- optional hotkey shortcut
 ```
 
-### Toggle
+### AddToggle
 ```lua
-Section:AddToggle({
-    Name = "Toggle Name",
+local Tgl = Section:AddToggle({
+    Name = "My Toggle",
     Default = false,
     Notifications = true,
     Callback = function(state) end
 })
+Tgl:Set(true)
+Tgl:Get()
+Tgl:AddKeybind("G")
 ```
 
-### Slider
+### AddSlider
 ```lua
-Section:AddSlider({
-    Name = "Slider Name",
-    Min = 0,
-    Max = 100,
+local Sld = Section:AddSlider({
+    Name = "My Slider",
+    Min = 0, Max = 100,
     Default = 50,
     Increment = 5,
     Callback = function(value) end
 })
+Sld:Set(80)
+Sld:Get()
 ```
 
-### Textbox
+### AddTextbox
 ```lua
-Section:AddTextbox({
-    Name = "Textbox Name",
-    PlaceholderText = "Enter text...",
+local Box = Section:AddTextbox({
+    Name = "My Textbox",
+    PlaceholderText = "Type here...",
     Default = "",
     Callback = function(text) end
 })
+Box:Set("hello")
+Box:Get()
 ```
+Callback fires when Enter is pressed while focused.
 
-### Colorpicker
+### AddColorpicker
 ```lua
-Section:AddColorpicker({
-    Name = "Color Picker",
+local Cp = Section:AddColorpicker({
+    Name = "My Color",
     Default = Color3.fromRGB(0, 204, 255),
     Callback = function(color) end
 })
+Cp:Set(Color3.fromRGB(255, 0, 0))
+Cp:Get()
 ```
+Opens a floating saturation/value box plus a hue bar.
 
-### Dropdown (single-select)
+### AddDropdown
 ```lua
-Section:AddDropdown({
-    Name = "Dropdown Name",
-    Options = {"Option A", "Option B"},
-    Default = "Option A",
+-- Single-select
+local Dd = Section:AddDropdown({
+    Name = "Mode",
+    Options = {"Attack", "Defense", "Balanced"},
+    Default = "Balanced",
     Callback = function(selected) end
 })
-```
 
-### Dropdown (multi-select)
-```lua
-Section:AddDropdown({
-    Name = "Multi Dropdown",
-    Options = {"1", "2", "3", "4"},
-    Default = {"1", "3"},
+-- Multi-select
+local MultiDd = Section:AddDropdown({
+    Name = "Multi Select",
+    Options = {"A", "B", "C"},
+    Default = {"A", "C"},
     Multi = true,
     Callback = function(selected) end
 })
+
+Dd:Set("Attack")
+Dd:Get()
+Dd:Refresh({"New1", "New2"})  -- replace the option list
 ```
 
-### Keybind (button/toggle shortcut)
+### AddKeybind (standalone)
 ```lua
-local MyButton = Section:AddButton({ Name = "My Button", Callback = function() end })
-MyButton:AddKeybind("F")
-```
-
-### Keybind (standalone)
-```lua
-Section:AddKeybind({
+local Kb = Section:AddKeybind({
     Name = "Custom Keybind",
     Default = Enum.KeyCode.H,
-    Mode = "Toggle", -- or "Hold"
+    Mode = "Toggle",  -- "Button" or "Toggle"
     Callback = function(state) end
 })
+Kb:Set(Enum.KeyCode.J)
+Kb:Get()
+```
+In `"Toggle"` mode a small indicator dot lights up in the accent color while active.
+
+All components except `AddLabel` and `AddKeybind` accept `Notifications = true/false` to auto-fire a `Window:Notify()` toast whenever their callback runs (subject to the window's global `Notifications` setting).
+
+---
+
+## 🎨 Theming
+
+```lua
+Window:SetTheme("Dark")
 ```
 
-Every component accepts an optional `Notifications = true` flag to automatically fire a notification when its callback runs.
+Built-in themes: `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light`
+
+Every themed element (backgrounds, strokes, text, accents) updates instantly and tab button highlighting refreshes to match the active theme.
 
 ---
 
 ## 🔔 Notifications
 
-Trigger a notification anywhere in the script:
-
 ```lua
 Window:Notify({
     Title = "Title Text",
     Content = "Body text of the notification.",
-    Duration = 3 -- seconds
+    Duration = 3
 })
 ```
 
-Global notifications can be toggled at runtime:
+Notifications stack bottom-right, slide in with a back-ease animation, and slide out automatically after `Duration` seconds. Disable them globally with:
 
 ```lua
 Window.GlobalNotifications = false
@@ -231,57 +274,59 @@ Window.GlobalNotifications = false
 
 ---
 
-## 🎨 Theming
+## 📊 Dashboard Tab (Optional)
 
-Switch themes at runtime with:
+When `ControlPanel = true` (default), Spectrum automatically appends a **Dashboard** tab containing:
+
+- Live **FPS**, **Ping**, **Memory usage**, and **Network data received** widgets, refreshed twice per second
+- A **profile card** showing the local player's avatar thumbnail, display name, username, and user ID
+- The current place's name and a **copy Place ID** button (uses `setclipboard` if the executor supports it)
+
+---
+
+## ⌨️ Keybind System
+
+Three ways to attach hotkeys:
+
+| Method | Where | Behavior |
+|---|---|---|
+| `Button:AddKeybind("F")` | On a button | Pressing the key re-triggers the button's callback |
+| `Toggle:AddKeybind("G")` | On a toggle | Pressing the key flips the toggle |
+| `Section:AddKeybind({...})` | Standalone | Independent keybind element with `"Button"` or `"Toggle"` mode |
+
+Clicking a keybind's key-button puts it into listening mode (`"..."`) until the next key press is captured.
+
+---
+
+## 🧩 Full Example
 
 ```lua
-Window:SetTheme("Dark")
-```
+local Spectrum = loadstring(game:HttpGet("<raw-source-url>"))()
 
-Available themes: `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light`
+local Window = Spectrum:AddWindow({
+    Name = "Example Panel",
+    Theme = "Aqua",
+    ToggleKeybind = Enum.KeyCode.RightControl,
+})
 
-The Settings tab includes a dropdown that lets the user pick a theme interactively, calling `Window:SetTheme(theme)` on selection.
+local Tab = Window:AddTab("Main", true)
 
----
+local Left = Tab:AddSection("Controls", "Left")
+Left:AddButton({ Name = "Run Action", Callback = function() print("ran!") end })
+Left:AddToggle({ Name = "Enable Feature", Default = false, Callback = function(s) end })
 
-## ⌨️ Default Test Keybinds
+local Right = Tab:AddSection("Preferences", "Right")
+Right:AddDropdown({ Name = "Mode", Options = {"A", "B"}, Default = "A", Callback = function(v) end })
+Right:AddColorpicker({ Name = "Accent Color", Default = Color3.new(1,1,1), Callback = function(c) end })
 
-| Key | Action |
-|---|---|
-| `RightControl` | Show / hide the window |
-| `F` | Triggers "Shortcut Button" |
-| `G` | Triggers "Shortcut Toggle" |
-| `H` | Triggers "Custom Keybind" (Toggle mode) |
-
----
-
-## 🗒️ Tab & Section Summary
-
-```
-├─ Two-Column Tab  : 2 Sections (Left + Right)
-├─ Single-Column Tab: 1 Section
-├─ Settings Tab     : Theme & Keybind management
-├─ Advanced Tab     : Info & Live Demo
-└─ Dashboard Tab    : (Automatic)
+Window:Notify({ Title = "Ready", Content = "Panel loaded successfully.", Duration = 3 })
 ```
 
 ---
 
 ## 📌 Notes on Two-Column Mode
 
-- Pass `true` as the second argument of `Window:AddTab()` to enable two-column layout.
-- Use `"Left"` / `"Right"` as the second argument of `Tab:AddSection()` to place a section on a given side.
-- Pass `false` (or omit the argument) for a standard single-column layout.
-
----
-
-## ✅ Quick Start Checklist
-
-1. Load the Spectrum library (remote or local fallback).
-2. Create the window with `Spectrum:AddWindow({...})`.
-3. Add tabs with `Window:AddTab(name, isTwoColumn)`.
-4. Add sections with `Tab:AddSection(name, side?)`.
-5. Populate sections with components (`AddButton`, `AddToggle`, `AddSlider`, etc.).
-6. Optionally wire up keybinds with `:AddKeybind()`.
-7. Press the configured `ToggleKeybind` to open the panel.
+- Pass `true` as the second argument of `Window:AddTab()` to enable the two-column layout for that tab.
+- Use `"Left"` / `"Right"` as the second argument of `Tab:AddSection()` to place a section on a given side; each takes up roughly half the row width.
+- Omit the argument, or pass `"Single"`, for a full-width section that stacks normally — this works in both layout modes.
+- Single-column tabs (`AddTab(name, false)`) ignore the alignment argument and always stack sections vertically.
