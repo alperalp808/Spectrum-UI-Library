@@ -1,7 +1,19 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.6.0 (Stats Tab & Modern Auth Edition)
+    SPECTRUM UI LIBRARY  |  v3.7.0 (2-Column Tab Support Edition)
     ============================================================
+    
+    YENİ ÖZELLİK: Tab'lara 2Sec parametresi ile iki sütunlu layout desteği
+    
+    Kullanım:
+    local Tab = Window:AddTab("İsim", true)  -- 2 sütun aktif
+    local RightSection = Tab:AddSection("Sağ Bölüm", "Right")
+    local LeftSection = Tab:AddSection("Sol Bölüm", "Left")
+    
+    OR
+    
+    local Tab = Window:AddTab("İsim", false)  -- Normal tek sütun
+    local Section = Tab:AddSection("Bölüm")
 ]]
 
 local TweenService      = game:GetService("TweenService")
@@ -437,7 +449,7 @@ function Spectrum:AddWindow(config)
         Position = UDim2.new(1, -108, 1, -16),
         BackgroundTransparency = 1,
         Font = Enum.Font.Gotham,
-        Text = "Spectrum v3.6.0",
+        Text = "Spectrum v3.7.0",
         TextColor3 = Theme.SubText,
         TextTransparency = 0.4,
         TextSize = 9,
@@ -871,10 +883,13 @@ function Spectrum:AddWindow(config)
         end)
     end
 
-    function Window:AddTab(tabName)
+    function Window:AddTab(tabName, twoColumnMode)
         tabName = tabName or "Tab"
+        twoColumnMode = twoColumnMode or false
+        
         local Tab = {}
         Tab.Sections = {}
+        Tab.TwoColumnMode = twoColumnMode
 
         local TabButton = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 32),
@@ -913,6 +928,28 @@ function Spectrum:AddWindow(config)
         })
         Themed(Page, "ScrollBarImageColor3", "Accent")
 
+        -- Two Column Layout Container (eğer twoColumnMode aktifse)
+        local LayoutContainer
+        if twoColumnMode then
+            LayoutContainer = Create("Frame", {
+                Name = "LayoutContainer",
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Parent = Page,
+            })
+            Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.SpaceBetween,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                Padding = UDim.new(0, 6),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = LayoutContainer,
+            })
+        end
+
+        -- Standart UIListLayout (single column için)
         Create("UIListLayout", {
             Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -923,6 +960,7 @@ function Spectrum:AddWindow(config)
         Tab.Button = TabButton
         Tab.Label = TabLabel
         Tab.Page = Page
+        Tab.LayoutContainer = LayoutContainer
 
         local function SelectTab()
             for _, t in pairs(Window.Tabs) do
@@ -943,17 +981,19 @@ function Spectrum:AddWindow(config)
         table.insert(Window.Tabs, Tab)
         if #Window.Tabs == 1 then SelectTab() end
 
-        function Tab:AddSection(sectionName)
+        function Tab:AddSection(sectionName, alignment)
             sectionName = sectionName or "Section"
+            alignment = alignment or "Single"  -- "Left", "Right", veya "Single"
+            
             local Section = {}
 
             local SectionOuter = Create("Frame", {
-                Size = UDim2.new(1, -6, 0, 0),
+                Size = twoColumnMode and (alignment ~= "Single" and UDim2.new(0.48, 0, 0, 0) or UDim2.new(1, -6, 0, 0)) or UDim2.new(1, -6, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Secondary,
                 BackgroundTransparency = 0.12,
                 BorderSizePixel = 0,
-                Parent = Page,
+                Parent = twoColumnMode and (alignment ~= "Single" and LayoutContainer or Page) or Page,
             })
             Themed(SectionOuter, "BackgroundColor3", "Secondary")
             Themed(Stroke(SectionOuter, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
@@ -1850,10 +1890,10 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- STATS SEKMESİ (DÜZELTİLDİ: Enum.HorizontalAlignment.Center kullanıldı)
+    -- STATS/DASHBOARD TAB (Opsiyonel)
     --=====================================================================
     if ShowControlPanel then
-        local StatsTab = Window:AddTab("Dashboard")
+        local StatsTab = Window:AddTab("Dashboard", false)
         local SpectatingPlayer = nil
 
         local PanelFrame = Create("Frame", {
@@ -1868,7 +1908,7 @@ function Spectrum:AddWindow(config)
         Themed(Stroke(PanelFrame, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
         Pad(PanelFrame, 10, 10, 10, 10)
 
-        -- 1. ANLIK PERFORMANS METRİKLERİ KARTI
+        -- Performance Card
         local PerformanceCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 60),
             BackgroundColor3 = Theme.Tertiary,
@@ -1879,7 +1919,6 @@ function Spectrum:AddWindow(config)
         Themed(PerformanceCard, "BackgroundColor3", "Tertiary")
         Themed(Stroke(PerformanceCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-        -- HATA BURADAYDI: SpaceEvenly -> Center olarak güncellendi
         Create("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
             HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -1957,7 +1996,7 @@ function Spectrum:AddWindow(config)
             end
         end)
 
-        -- 2. PROFİL KARTI
+        -- Profile Card
         local ProfileCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 65),
             Position = UDim2.new(0, 0, 0, 68),
@@ -2056,137 +2095,6 @@ function Spectrum:AddWindow(config)
                 Window:Notify({ Title = "Hata", Content = "Executor'ınız setclipboard desteklemiyor.", Duration = 2 })
             end
         end)
-
-        -- 3. DİNAMİK OYUNCU LİSTESİ
-        Themed(Create("TextLabel", {
-            Size = UDim2.new(1, 0, 0, 20),
-            Position = UDim2.new(0, 2, 0, 140),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.GothamBold,
-            Text = "👥 Sunucu Oyuncuları",
-            TextColor3 = Theme.Text,
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = PanelFrame,
-        }), "TextColor3", "Text")
-
-        local PlayerScroll = Create("ScrollingFrame", {
-            Size = UDim2.new(1, 0, 0, 230),
-            Position = UDim2.new(0, 0, 0, 164),
-            BackgroundColor3 = Theme.Tertiary,
-            BackgroundTransparency = 0.2,
-            BorderSizePixel = 0,
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = Theme.Accent,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            AutomaticCanvasSize = Enum.AutomaticSize.Y,
-            Parent = PanelFrame,
-        })
-        Themed(PlayerScroll, "BackgroundColor3", "Tertiary")
-        Themed(PlayerScroll, "ScrollBarImageColor3", "Accent")
-        Themed(Stroke(PlayerScroll, Theme.Stroke, 1, 0.4), "Color", "Stroke")
-        Pad(PlayerScroll, 6, 6, 6, 6)
-
-        Create("UIListLayout", {
-            Padding = UDim.new(0, 5),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = PlayerScroll,
-        })
-
-        local function RefreshPlayerList()
-            for _, child in ipairs(PlayerScroll:GetChildren()) do
-                if child:IsA("Frame") then child:Destroy() end
-            end
-
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LocalPlayer then
-                    local PlrFrame = Create("Frame", {
-                        Size = UDim2.new(1, 0, 0, 28),
-                        BackgroundColor3 = Theme.Secondary,
-                        BackgroundTransparency = 0.1,
-                        BorderSizePixel = 0,
-                        Parent = PlayerScroll,
-                    })
-                    Themed(PlrFrame, "BackgroundColor3", "Secondary")
-                    Themed(Stroke(PlrFrame, Theme.Stroke, 1, 0.4), "Color", "Stroke")
-
-                    Themed(Create("TextLabel", {
-                        Size = UDim2.new(1, -135, 1, 0),
-                        Position = UDim2.new(0, 10, 0, 0),
-                        BackgroundTransparency = 1,
-                        Font = Enum.Font.GothamMedium,
-                        Text = plr.DisplayName .. " (@" .. plr.Name .. ")",
-                        TextColor3 = Theme.Text,
-                        TextSize = 11,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextTruncate = Enum.TextTruncate.AtEnd,
-                        Parent = PlrFrame,
-                    }), "TextColor3", "Text")
-
-                    local SpecBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 60, 0, 20),
-                        Position = UDim2.new(1, -125, 0.5, -10),
-                        BackgroundColor3 = SpectatingPlayer == plr and Theme.Accent or Theme.Tertiary,
-                        Text = SpectatingPlayer == plr and "Unspec" or "Spec",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 9,
-                        TextColor3 = Theme.Text,
-                        AutoButtonColor = false,
-                        Parent = PlrFrame,
-                    })
-                    Themed(SpecBtn, "TextColor3", "Text")
-                    Themed(Stroke(SpecBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-
-                    SpecBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(SpecBtn)
-                        PlaySound(Sounds.Click, 0.3)
-                        local camera = workspace.CurrentCamera
-                        if SpectatingPlayer == plr then
-                            SpectatingPlayer = nil
-                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                                camera.CameraSubject = LocalPlayer.Character.Humanoid
-                            end
-                            SpecBtn.Text = "Spec"
-                            SpecBtn.BackgroundColor3 = Theme.Tertiary
-                        else
-                            SpectatingPlayer = plr
-                            if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-                                camera.CameraSubject = plr.Character.Humanoid
-                            end
-                            RefreshPlayerList()
-                        end
-                    end)
-
-                    local TPBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 55, 0, 20),
-                        Position = UDim2.new(1, -60, 0.5, -10),
-                        BackgroundColor3 = Theme.Tertiary,
-                        Text = "Teleport",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 9,
-                        TextColor3 = Theme.Text,
-                        AutoButtonColor = false,
-                        Parent = PlrFrame,
-                    })
-                    Themed(TPBtn, "BackgroundColor3", "Tertiary")
-                    Themed(TPBtn, "TextColor3", "Text")
-                    Themed(Stroke(TPBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-
-                    TPBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(TPBtn)
-                        PlaySound(Sounds.Click, 0.3)
-                        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                            Window:Notify({ Title = "Işınlanıldı", Content = plr.Name .. " isimli oyuncunun yanına ışınlanıldı.", Duration = 2 })
-                        end
-                    end)
-                end
-            end
-        end
-
-        Players.PlayerAdded:Connect(RefreshPlayerList)
-        Players.PlayerRemoving:Connect(RefreshPlayerList)
-        RefreshPlayerList()
     end
 
     return Window
