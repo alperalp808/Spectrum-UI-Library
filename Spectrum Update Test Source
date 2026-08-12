@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.9.1 (Custom Textbox & Top-Right Themes)
+    SPECTRUM UI LIBRARY  |  v3.9.2 (Full Restored Edition)
     ============================================================
 ]]
 
@@ -9,6 +9,7 @@ local UserInputService  = game:GetService("UserInputService")
 local Players            = game:GetService("Players")
 local SoundService       = game:GetService("SoundService")
 local Debris             = game:GetService("Debris")
+local MarketplaceService = game:GetService("MarketplaceService")
 local StatsService       = game:GetService("Stats")
 local RunService         = game:GetService("RunService")
 
@@ -216,6 +217,7 @@ function Spectrum:AddWindow(config)
     local Window = {}
     Window.__index = Window
     Window.Theme = ThemeName
+    Window.CurrentThemeData = Theme
     Window.Tabs = {}
     Window.ToggleKeybind = ToggleKeybind
     Window.GlobalNotifications = GlobalNotifications
@@ -250,7 +252,7 @@ function Spectrum:AddWindow(config)
         BackgroundColor3 = Theme.Background,
         BackgroundTransparency = 0.32,
         BorderSizePixel = 0,
-        Visible = true,
+        Visible = false,
         Parent = ScreenGui,
     })
     Themed(Main, "BackgroundColor3", "Background")
@@ -291,7 +293,7 @@ function Spectrum:AddWindow(config)
         Parent = TopBar,
     }), "TextColor3", "Text")
 
-    -- SAĞ ÜST SABİT TEMA LİSTESİ (Top-Right Theme Selector Bar)
+    -- SAĞ ÜST SABİT TEMA LİSTESİ
     local ThemeListHolder = Create("Frame", {
         Name = "ThemeListHolder",
         Size = UDim2.new(0, 320, 0, 24),
@@ -301,7 +303,7 @@ function Spectrum:AddWindow(config)
         Parent = TopBar,
     })
 
-    local ThemeLayout = Create("UIListLayout", {
+    Create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         HorizontalAlignment = Enum.HorizontalAlignment.Right,
         VerticalAlignment = Enum.VerticalAlignment.Center,
@@ -332,15 +334,6 @@ function Spectrum:AddWindow(config)
         tBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Click, 0.25)
             Window:SetTheme(tName)
-            for name, btn in pairs(themeButtons) do
-                if name == tName then
-                    Tween(btn, { BackgroundColor3 = Window.CurrentThemeData.Accent }, 0.15)
-                    btn.TextColor3 = Color3.new(1, 1, 1)
-                else
-                    Tween(btn, { BackgroundColor3 = Window.CurrentThemeData.Tertiary }, 0.15)
-                    btn.TextColor3 = Window.CurrentThemeData.SubText
-                end
-            end
         end)
     end
 
@@ -456,6 +449,19 @@ function Spectrum:AddWindow(config)
         Catcher.MouseButton1Click:Connect(function() ClosePopup(panel) end)
     end
 
+    Themed(Create("TextLabel", {
+        Size = UDim2.new(0, 100, 0, 14),
+        Position = UDim2.new(1, -108, 1, -16),
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Gotham,
+        Text = "Spectrum v3.9.2",
+        TextColor3 = Theme.SubText,
+        TextTransparency = 0.4,
+        TextSize = 9,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = Main,
+    }), "TextColor3", "SubText")
+
     local NotifyHolder = Create("Frame", {
         Name = "NotifyHolder",
         AnchorPoint = Vector2.new(1, 1),
@@ -558,12 +564,14 @@ function Spectrum:AddWindow(config)
 
     UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
-        if input.KeyCode == Window.ToggleKeybind then Window:Toggle() end
+        if input.KeyCode == Window.ToggleKeybind then
+            Window:Toggle()
+        end
     end)
 
-    function Window:SetToggleKeybind(keyCode) Window.ToggleKeybind = keyCode end
-
-    Window.CurrentThemeData = Theme
+    function Window:SetToggleKeybind(keyCode)
+        Window.ToggleKeybind = keyCode
+    end
 
     function Window:SetTheme(newThemeName)
         local t = Themes[newThemeName]
@@ -573,9 +581,22 @@ function Spectrum:AddWindow(config)
         Window.CurrentThemeData = t
 
         for _, entry in ipairs(ThemeRegistry) do
-            if entry.Instance and entry.Instance.Parent then entry.Instance[entry.Property] = t[entry.Key] end
+            if entry.Instance and entry.Instance.Parent then
+                entry.Instance[entry.Property] = t[entry.Key]
+            end
         end
-        for _, cb in ipairs(ThemeCallbacks) do pcall(cb, t) end
+        for _, cb in ipairs(ThemeCallbacks) do
+            pcall(cb, t)
+        end
+        for name, btn in pairs(themeButtons) do
+            if name == newThemeName then
+                Tween(btn, { BackgroundColor3 = t.Accent }, 0.15)
+                btn.TextColor3 = Color3.new(1, 1, 1)
+            else
+                Tween(btn, { BackgroundColor3 = t.Tertiary }, 0.15)
+                btn.TextColor3 = t.SubText
+            end
+        end
         for _, tb in ipairs(Window.Tabs) do
             if tb.Page.Visible then
                 tb.Button.BackgroundColor3 = t.Accent
@@ -617,9 +638,22 @@ function Spectrum:AddWindow(config)
         Themed(Stroke(NotifFrame, Theme.Accent, 1, 0.35), "Color", "Accent")
         Pad(NotifFrame, 12, 10, 12, 10)
 
-        Create("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder, Parent = NotifFrame })
+        local NotifLine = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 2),
+            BackgroundColor3 = Theme.Accent,
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            Parent = NotifFrame,
+        })
+        Themed(NotifLine, "BackgroundColor3", "Accent")
 
-        Themed(Create("TextLabel", {
+        Create("UIListLayout", {
+            Padding = UDim.new(0, 2),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = NotifFrame,
+        })
+
+        local NotifTitle = Create("TextLabel", {
             Size = UDim2.new(1, 0, 0, 16),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
@@ -628,9 +662,10 @@ function Spectrum:AddWindow(config)
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = NotifFrame,
-        }), "TextColor3", "Text")
+        })
+        Themed(NotifTitle, "TextColor3", "Text")
 
-        Themed(Create("TextLabel", {
+        local NotifContent = Create("TextLabel", {
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
@@ -641,7 +676,8 @@ function Spectrum:AddWindow(config)
             TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = NotifFrame,
-        }), "TextColor3", "SubText")
+        })
+        Themed(NotifContent, "TextColor3", "SubText")
 
         PlaySound(Sounds.Notify, 0.35)
         Tween(NotifFrame, { Position = UDim2.new(0, 0, 0, 0) }, 0.35, Enum.EasingStyle.Back)
@@ -649,7 +685,9 @@ function Spectrum:AddWindow(config)
         task.delay(Duration, function()
             if NotifFrame and NotifFrame.Parent then
                 local tw = Tween(NotifFrame, { Position = UDim2.new(1.4, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quart)
-                tw.Completed:Connect(function() if SlideContainer and SlideContainer.Parent then SlideContainer:Destroy() end end)
+                tw.Completed:Connect(function()
+                    if SlideContainer and SlideContainer.Parent then SlideContainer:Destroy() end
+                end)
             end
         end)
     end
@@ -657,17 +695,209 @@ function Spectrum:AddWindow(config)
     local function DoNotify(elementNotifSetting, title, content)
         local shouldNotify = elementNotifSetting
         if shouldNotify == nil then shouldNotify = true end
-        if shouldNotify and Window.GlobalNotifications then Window:Notify({ Title = title, Content = content, Duration = 2.5 }) end
+        if shouldNotify and Window.GlobalNotifications then
+            Window:Notify({ Title = title, Content = content, Duration = 2.5 })
+        end
     end
 
     --=====================================================================
-    -- TAB YÖNETİMİ & DÜZENİ
+    -- KEY LOGIN SCREEN
     --=====================================================================
-    function Window:AddTab(tabName)
+    if KeySystemCfg.Enabled then
+        local KeyOverlay = Create("Frame", {
+            Name = "KeyOverlay",
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundColor3 = Color3.fromRGB(5, 5, 5),
+            BackgroundTransparency = 0.35,
+            ZIndex = 100,
+            Parent = ScreenGui,
+        })
+
+        local KeyScreen = Create("Frame", {
+            Name = "KeyScreen",
+            Size = UDim2.new(0, 360, 0, 270),
+            Position = UDim2.new(0.5, -180, 0.5, -135),
+            BackgroundColor3 = Theme.Background,
+            BackgroundTransparency = 0.05,
+            BorderSizePixel = 0,
+            ZIndex = 101,
+            Parent = KeyOverlay,
+        })
+        Themed(KeyScreen, "BackgroundColor3", "Background")
+        Themed(Stroke(KeyScreen, Theme.Accent, 1.5, 0.1), "Color", "Accent")
+        Pad(KeyScreen, 22, 20, 22, 20)
+
+        MakeDraggable(KeyScreen, KeyScreen)
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = KeySystemCfg.Title or "SPECTRUM AUTHENTICATION",
+            TextColor3 = Theme.Text,
+            TextSize = 15,
+            ZIndex = 102,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = KeyScreen,
+        }), "TextColor3", "Text")
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 20),
+            Position = UDim2.new(0, 0, 0, 28),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            Text = KeySystemCfg.Note or "Lütfen devam etmek için bilgilerinizi giriniz.",
+            TextColor3 = Theme.SubText,
+            TextSize = 11,
+            ZIndex = 102,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = KeyScreen,
+        }), "TextColor3", "SubText")
+
+        local UserBoxFrame = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.new(0, 0, 0, 62),
+            BackgroundColor3 = Theme.Secondary,
+            ZIndex = 102,
+            Parent = KeyScreen,
+        })
+        Themed(UserBoxFrame, "BackgroundColor3", "Secondary")
+        Themed(Stroke(UserBoxFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(0, 28, 1, 0),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            Text = "👤",
+            TextSize = 12,
+            ZIndex = 103,
+            Parent = UserBoxFrame,
+        }))
+
+        local UserInput = Create("TextBox", {
+            Size = UDim2.new(1, -34, 1, 0),
+            Position = UDim2.new(0, 30, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            PlaceholderText = "Kullanıcı Adı...",
+            Font = Enum.Font.GothamMedium,
+            TextSize = 11,
+            TextColor3 = Theme.Text,
+            PlaceholderColor3 = Theme.SubText,
+            ClearTextOnFocus = false,
+            ZIndex = 103,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = UserBoxFrame,
+        })
+        Themed(UserInput, "TextColor3", "Text")
+        Themed(UserInput, "PlaceholderColor3", "SubText")
+
+        local PassBoxFrame = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.new(0, 0, 0, 108),
+            BackgroundColor3 = Theme.Secondary,
+            ZIndex = 102,
+            Parent = KeyScreen,
+        })
+        Themed(PassBoxFrame, "BackgroundColor3", "Secondary")
+        Themed(Stroke(PassBoxFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(0, 28, 1, 0),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            Text = "🔑",
+            TextSize = 12,
+            ZIndex = 103,
+            Parent = PassBoxFrame,
+        }))
+
+        local PassInput = Create("TextBox", {
+            Size = UDim2.new(1, -34, 1, 0),
+            Position = UDim2.new(0, 30, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            PlaceholderText = "Şifre / Key...",
+            Font = Enum.Font.GothamMedium,
+            TextSize = 11,
+            TextColor3 = Theme.Text,
+            PlaceholderColor3 = Theme.SubText,
+            ClearTextOnFocus = false,
+            ZIndex = 103,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = PassBoxFrame,
+        })
+        Themed(PassInput, "TextColor3", "Text")
+        Themed(PassInput, "PlaceholderColor3", "SubText")
+
+        local SubmitBtn = Create("TextButton", {
+            Size = UDim2.new(1, 0, 0, 38),
+            Position = UDim2.new(0, 0, 0, 162),
+            BackgroundColor3 = Theme.Accent,
+            Text = "GİRİŞ YAP",
+            Font = Enum.Font.GothamBold,
+            TextSize = 12,
+            TextColor3 = Color3.new(1, 1, 1),
+            AutoButtonColor = false,
+            ZIndex = 102,
+            Parent = KeyScreen,
+        })
+        Themed(SubmitBtn, "BackgroundColor3", "Accent")
+        Themed(Stroke(SubmitBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        SubmitBtn.MouseEnter:Connect(function()
+            Tween(SubmitBtn, { BackgroundTransparency = 0.2 }, 0.15)
+        end)
+        SubmitBtn.MouseLeave:Connect(function()
+            Tween(SubmitBtn, { BackgroundTransparency = 0 }, 0.15)
+        end)
+
+        SubmitBtn.MouseButton1Click:Connect(function()
+            ClickBounce(SubmitBtn)
+            PlaySound(Sounds.Click, 0.3)
+            local enteredUser = UserInput.Text
+            local enteredPass = PassInput.Text
+            local success = false
+
+            for _, account in ipairs(KeySystemCfg.Users or {}) do
+                if account.User == enteredUser and account.Pass == enteredPass then
+                    success = true
+                    break
+                end
+            end
+
+            if success then
+                Window.Authenticated = true
+                PlaySound(Sounds.Success, 0.4)
+                Tween(KeyScreen, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+                Tween(KeyOverlay, { BackgroundTransparency = 1 }, 0.25)
+                task.delay(0.25, function()
+                    KeyOverlay:Destroy()
+                    Window:Show()
+                end)
+            else
+                PlaySound(Sounds.Error, 0.4)
+                PassInput.Text = ""
+                PassInput.PlaceholderText = "Hatalı Bilgi!"
+                Tween(PassBoxFrame, { BackgroundColor3 = Theme.Danger }, 0.15)
+                task.delay(0.5, function()
+                    Tween(PassBoxFrame, { BackgroundColor3 = Theme.Secondary }, 0.2)
+                end)
+            end
+        end)
+    else
+        task.delay(0.1, function()
+            Window:Show()
+        end)
+    end
+
+    function Window:AddTab(tabName, twoColumnMode)
         tabName = tabName or "Tab"
+        twoColumnMode = twoColumnMode or false
 
         local Tab = {}
         Tab.Sections = {}
+        Tab.TwoColumnMode = twoColumnMode
 
         local TabButton = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 32),
@@ -706,69 +936,39 @@ function Spectrum:AddWindow(config)
         })
         Themed(Page, "ScrollBarImageColor3", "Accent")
 
+        -- Two Column Layout Container (eğer twoColumnMode aktifse)
+        local LayoutContainer
+        if twoColumnMode then
+            LayoutContainer = Create("Frame", {
+                Name = "LayoutContainer",
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Parent = Page,
+            })
+            Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                Padding = UDim.new(0, 6),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = LayoutContainer,
+            })
+        end
+
+        -- Standart UIListLayout (single column için)
         Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
+            Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
             Parent = Page,
         })
         Pad(Page, 0, 0, 6, 10)
 
-        -- Top Container
-        local TopContainer = Create("Frame", {
-            Name = "TopContainer",
-            Size = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder = 1,
-            Parent = Page,
-        })
-        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = TopContainer })
-
-        -- Middle Columns Frame
-        local ColumnsContainer = Create("Frame", {
-            Name = "ColumnsContainer",
-            Size = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder = 2,
-            Parent = Page,
-        })
-
-        local LeftColumn = Create("Frame", {
-            Name = "LeftColumn",
-            Size = UDim2.new(0.49, 0, 0, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            Parent = ColumnsContainer,
-        })
-        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = LeftColumn })
-
-        local RightColumn = Create("Frame", {
-            Name = "RightColumn",
-            Size = UDim2.new(0.49, 0, 0, 0),
-            Position = UDim2.new(0.51, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            Parent = ColumnsContainer,
-        })
-        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = RightColumn })
-
-        -- Bottom Container
-        local BottomContainer = Create("Frame", {
-            Name = "BottomContainer",
-            Size = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder = 3,
-            Parent = Page,
-        })
-        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = BottomContainer })
-
         Tab.Button = TabButton
         Tab.Label = TabLabel
         Tab.Page = Page
+        Tab.LayoutContainer = LayoutContainer
 
         local function SelectTab()
             for _, t in pairs(Window.Tabs) do
@@ -791,25 +991,17 @@ function Spectrum:AddWindow(config)
 
         function Tab:AddSection(sectionName, alignment)
             sectionName = sectionName or "Section"
-            alignment = alignment or "Left"
+            alignment = alignment or "Single"  -- "Left", "Right", veya "Single"
 
             local Section = {}
-            local parentContainer = LeftColumn
-            if alignment == "Top" then
-                parentContainer = TopContainer
-            elseif alignment == "Right" then
-                parentContainer = RightColumn
-            elseif alignment == "Bottom" then
-                parentContainer = BottomContainer
-            end
 
             local SectionOuter = Create("Frame", {
-                Size = UDim2.new(1, -6, 0, 0),
+                Size = twoColumnMode and (alignment ~= "Single" and UDim2.new(0.48, 0, 0, 0) or UDim2.new(1, -6, 0, 0)) or UDim2.new(1, -6, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Secondary,
                 BackgroundTransparency = 0.12,
                 BorderSizePixel = 0,
-                Parent = parentContainer,
+                Parent = twoColumnMode and (alignment ~= "Single" and LayoutContainer or Page) or Page,
             })
             Themed(SectionOuter, "BackgroundColor3", "Secondary")
             Themed(Stroke(SectionOuter, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
@@ -836,7 +1028,6 @@ function Spectrum:AddWindow(config)
             }), "BackgroundColor3", "Accent")
 
             local ElementHolder = Create("Frame", {
-                Name = "ElementHolder",
                 Size = UDim2.new(1, -20, 0, 0),
                 Position = UDim2.new(0, 10, 0, 36),
                 AutomaticSize = Enum.AutomaticSize.Y,
@@ -851,8 +1042,6 @@ function Spectrum:AddWindow(config)
                 Parent = ElementHolder,
             })
             Pad(SectionOuter, 0, 0, 0, 10)
-
-            Section.ElementHolder = ElementHolder
 
             local function BaseElement(height)
                 local Frame = Create("Frame", {
@@ -930,11 +1119,63 @@ function Spectrum:AddWindow(config)
                     task.spawn(Callback)
                 end
 
-                Btn.MouseEnter:Connect(function() Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15) end)
-                Btn.MouseLeave:Connect(function() Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15) end)
+                Btn.MouseEnter:Connect(function()
+                    Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15)
+                end)
+                Btn.MouseLeave:Connect(function()
+                    Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15)
+                end)
+
                 Btn.MouseButton1Click:Connect(TriggerButton)
 
                 local API = { Instance = Frame }
+
+                function API:AddKeybind(keyName)
+                    local keyCode = Enum.KeyCode[keyName] or Enum.KeyCode.Unknown
+                    local Listening = false
+
+                    BtnLabel.Size = UDim2.new(1, -70, 1, 0)
+
+                    local KeyBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 45, 0, 20),
+                        Position = UDim2.new(1, -50, 0.5, -10),
+                        BackgroundColor3 = Theme.Secondary,
+                        Text = keyCode.Name,
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 10,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = Frame,
+                    })
+                    Themed(KeyBtn, "BackgroundColor3", "Secondary")
+                    Themed(KeyBtn, "TextColor3", "Text")
+                    Themed(Stroke(KeyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    KeyBtn.MouseButton1Click:Connect(function()
+                        if Listening then return end
+                        Listening = true
+                        KeyBtn.Text = "..."
+                        PlaySound(Sounds.Click, 0.3)
+                        local conn
+                        conn = UserInputService.InputBegan:Connect(function(input, processed)
+                            if input.UserInputType == Enum.UserInputType.Keyboard then
+                                keyCode = input.KeyCode
+                                KeyBtn.Text = keyCode.Name
+                                Listening = false
+                                DoNotify(Notifications, "Keybind Ayarlandı", Name .. " -> " .. keyCode.Name)
+                                conn:Disconnect()
+                            end
+                        end)
+                    end)
+
+                    UserInputService.InputBegan:Connect(function(input, processed)
+                        if processed or Listening then return end
+                        if input.KeyCode == keyCode and keyCode ~= Enum.KeyCode.Unknown then
+                            TriggerButton()
+                        end
+                    end)
+                end
+
                 return API
             end
 
@@ -973,7 +1214,8 @@ function Spectrum:AddWindow(config)
                     BorderSizePixel = 0,
                     Parent = Frame,
                 })
-                Themed(Stroke(SwitchBG, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+                local SwitchStroke = Stroke(SwitchBG, Theme.Stroke, 1, 0.4)
+                Themed(SwitchStroke, "Color", "Stroke")
 
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 16, 0, 16),
@@ -1006,8 +1248,141 @@ function Spectrum:AddWindow(config)
                     UpdateVisual()
                     task.spawn(Callback, State)
                 end
-                function API:Get() return State end
+                function API:Get()
+                    return State
+                end
+                function API:AddKeybind(keyName)
+                    local keyCode = Enum.KeyCode[keyName] or Enum.KeyCode.Unknown
+                    local Listening = false
+
+                    local KeyBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 45, 0, 20),
+                        Position = UDim2.new(1, -100, 0.5, -10),
+                        BackgroundColor3 = Theme.Secondary,
+                        Text = keyCode.Name,
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 10,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = Frame,
+                    })
+                    Themed(KeyBtn, "BackgroundColor3", "Secondary")
+                    Themed(KeyBtn, "TextColor3", "Text")
+                    Themed(Stroke(KeyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    KeyBtn.MouseButton1Click:Connect(function()
+                        if Listening then return end
+                        Listening = true
+                        KeyBtn.Text = "..."
+                        PlaySound(Sounds.Click, 0.3)
+                        local conn
+                        conn = UserInputService.InputBegan:Connect(function(input, processed)
+                            if input.UserInputType == Enum.UserInputType.Keyboard then
+                                keyCode = input.KeyCode
+                                KeyBtn.Text = keyCode.Name
+                                Listening = false
+                                DoNotify(Notifications, "Keybind Ayarlandı", Name .. " -> " .. keyCode.Name)
+                                conn:Disconnect()
+                            end
+                        end)
+                    end)
+
+                    UserInputService.InputBegan:Connect(function(input, processed)
+                        if processed or Listening then return end
+                        if input.KeyCode == keyCode and keyCode ~= Enum.KeyCode.Unknown then
+                            ToggleState()
+                        end
+                    end)
+                end
+
                 if Default then task.spawn(Callback, State) end
+                return API
+            end
+
+            function Section:AddKeybind(cfg)
+                cfg = cfg or {}
+                local Name = cfg.Name or "Keybind"
+                local Default = cfg.Default or Enum.KeyCode.Unknown
+                local Mode = cfg.Mode or "Button"
+                local Callback = cfg.Callback or function() end
+                local Notifications = cfg.Notifications
+                local CurrentKey = Default
+                local Listening = false
+                local ToggleState = false
+
+                local Frame = BaseElement(36)
+                NameLabel(Frame, Name)
+
+                local StateIndicator = nil
+                if Mode == "Toggle" then
+                    StateIndicator = Create("Frame", {
+                        Size = UDim2.new(0, 8, 0, 8),
+                        Position = UDim2.new(1, -112, 0.5, -4),
+                        BackgroundColor3 = Theme.Stroke,
+                        BorderSizePixel = 0,
+                        Parent = Frame,
+                    })
+                    Stroke(StateIndicator, Theme.Stroke, 1, 0)
+                end
+
+                local KeyBtn = Create("TextButton", {
+                    Size = UDim2.new(0, 90, 0, 24),
+                    Position = UDim2.new(1, -98, 0.5, -12),
+                    BackgroundColor3 = Theme.Secondary,
+                    Text = CurrentKey.Name,
+                    Font = Enum.Font.GothamMedium,
+                    TextSize = 11,
+                    TextColor3 = Theme.Text,
+                    AutoButtonColor = false,
+                    Parent = Frame,
+                })
+                Themed(KeyBtn, "BackgroundColor3", "Secondary")
+                Themed(KeyBtn, "TextColor3", "Text")
+                Themed(Stroke(KeyBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                KeyBtn.MouseButton1Click:Connect(function()
+                    if Listening then return end
+                    Listening = true
+                    KeyBtn.Text = "..."
+                    PlaySound(Sounds.Click, 0.3)
+                    local conn
+                    conn = UserInputService.InputBegan:Connect(function(input, processed)
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            CurrentKey = input.KeyCode
+                            KeyBtn.Text = CurrentKey.Name
+                            Listening = false
+                            DoNotify(Notifications, "Keybind Ayarlandı", Name .. " -> " .. CurrentKey.Name)
+                            conn:Disconnect()
+                        end
+                    end)
+                end)
+
+                UserInputService.InputBegan:Connect(function(input, processed)
+                    if processed or Listening then return end
+                    if input.KeyCode == CurrentKey and CurrentKey ~= Enum.KeyCode.Unknown then
+                        ClickBounce(KeyBtn)
+                        if Mode == "Toggle" then
+                            ToggleState = not ToggleState
+                            if StateIndicator then
+                                Tween(StateIndicator, { BackgroundColor3 = ToggleState and Theme.Accent or Theme.Stroke }, 0.15)
+                            end
+                            DoNotify(Notifications, "Keybind Tetiklendi", Name .. " (Toggle) -> " .. tostring(ToggleState))
+                            task.spawn(Callback, ToggleState)
+                        else
+                            DoNotify(Notifications, "Keybind Tetiklendi", Name .. " (" .. CurrentKey.Name .. ") tetiklendi.")
+                            task.spawn(Callback)
+                        end
+                    end
+                end)
+
+                local API = { Instance = Frame }
+                function API:Set(keyCode)
+                    CurrentKey = keyCode
+                    KeyBtn.Text = keyCode.Name
+                end
+                function API:Get()
+                    return CurrentKey
+                end
                 return API
             end
 
@@ -1080,7 +1455,9 @@ function Spectrum:AddWindow(config)
                     Fill.Size = UDim2.new(a, 0, 1, 0)
                     Knob.Position = UDim2.new(a, -6, 0.5, -6)
                     ValueLabel.Text = tostring(Value)
-                    if not silent then task.spawn(Callback, Value) end
+                    if not silent then
+                        task.spawn(Callback, Value)
+                    end
                 end
 
                 local dragging = false
@@ -1110,72 +1487,249 @@ function Spectrum:AddWindow(config)
                 SetValue((Default - Min) / (Max - Min), true)
 
                 local API = { Instance = Frame }
-                function API:Set(v) SetValue((v - Min) / (Max - Min)) end
-                function API:Get() return Value end
+                function API:Set(v)
+                    SetValue((v - Min) / (Max - Min))
+                end
+                function API:Get()
+                    return Value
+                end
                 return API
             end
 
-            -- YENİ GÜNCELLENMİŞ ADDTEXTBOX (İstenen Obje Yapısına Uygundur)
             function Section:AddTextbox(cfg)
                 cfg = cfg or {}
                 local Name = cfg.Name or "Textbox"
+                local Placeholder = cfg.PlaceholderText or "Yazınız..."
                 local Default = cfg.Default or ""
-                local PlaceholderText = cfg.PlaceholderText or cfg.Placeholder or "Type here..."
                 local Callback = cfg.Callback or function() end
                 local Notifications = cfg.Notifications
 
                 local Frame = BaseElement(36)
                 NameLabel(Frame, Name)
 
-                local BoxContainer = Create("Frame", {
+                local InputBox = Create("TextBox", {
                     Size = UDim2.new(1, -(CONTROL_X + CONTROL_RIGHT_PAD), 0, 24),
                     Position = UDim2.new(0, CONTROL_X, 0.5, -12),
                     BackgroundColor3 = Theme.Secondary,
-                    BorderSizePixel = 0,
+                    Text = Default,
+                    PlaceholderText = Placeholder,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 11,
+                    TextColor3 = Theme.Text,
+                    PlaceholderColor3 = Theme.SubText,
+                    TextXAlignment = Enum.TextXAlignment.Center,
+                    TextYAlignment = Enum.TextYAlignment.Center,
+                    ClearTextOnFocus = false,
                     Parent = Frame,
                 })
-                Themed(BoxContainer, "BackgroundColor3", "Secondary")
-                Themed(Stroke(BoxContainer, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+                Themed(InputBox, "BackgroundColor3", "Secondary")
+                Themed(InputBox, "TextColor3", "Text")
+                Themed(InputBox, "PlaceholderColor3", "SubText")
+                Themed(Stroke(InputBox, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-                local TextInput = Create("TextBox", {
-                    Size = UDim2.new(1, -12, 1, 0),
-                    Position = UDim2.new(0, 6, 0, 0),
-                    BackgroundTransparency = 1,
-                    Font = Enum.Font.Gotham,
-                    Text = Default,
-                    PlaceholderText = PlaceholderText,
-                    PlaceholderColor3 = Theme.SubText,
-                    TextColor3 = Theme.Text,
-                    TextSize = 11,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ClearTextOnFocus = false,
-                    Parent = BoxContainer,
-                })
-                Themed(TextInput, "TextColor3", "Text")
-                Themed(TextInput, "PlaceholderColor3", "SubText")
-
-                -- Metin her değiştiğinde anlık tetikleme
-                TextInput:GetPropertyChangedSignal("Text"):Connect(function()
-                    task.spawn(Callback, TextInput.Text)
+                InputBox.Focused:Connect(function()
+                    Tween(InputBox, { BackgroundColor3 = Theme.Tertiary }, 0.15)
                 end)
 
-                -- Odak kaybedildiğinde bildirim tetikleme
-                TextInput.FocusLost:Connect(function(enterPressed)
-                    PlaySound(Sounds.Click, 0.25)
-                    DoNotify(Notifications, "Metin Girildi", Name .. " -> " .. TextInput.Text)
+                InputBox.FocusLost:Connect(function(enterPressed)
+                    Tween(InputBox, { BackgroundColor3 = Theme.Secondary }, 0.15)
+                    if enterPressed then
+                        PlaySound(Sounds.Click, 0.3)
+                        DoNotify(Notifications, "Textbox Tetiklendi", Name .. " -> " .. InputBox.Text)
+                        task.spawn(Callback, InputBox.Text)
+                    end
                 end)
-
-                -- Varsayılan değer başlangıçta varsa çalıştır
-                if Default ~= "" then
-                    task.spawn(Callback, Default)
-                end
 
                 local API = { Instance = Frame }
-                function API:Set(val)
-                    TextInput.Text = tostring(val)
+                function API:Set(text)
+                    InputBox.Text = text
+                    task.spawn(Callback, text)
                 end
                 function API:Get()
-                    return TextInput.Text
+                    return InputBox.Text
+                end
+                return API
+            end
+
+            function Section:AddColorpicker(cfg)
+                cfg = cfg or {}
+                local Name = cfg.Name or "Colorpicker"
+                local Default = cfg.Default or Color3.new(1, 1, 1)
+                local Callback = cfg.Callback or function() end
+                local Notifications = cfg.Notifications
+
+                local h, s, v = Default:ToHSV()
+                local Hue, Sat, Val = h, s, v
+
+                local Frame = BaseElement(36)
+                NameLabel(Frame, Name)
+
+                local Swatch = Create("TextButton", {
+                    Size = UDim2.new(0, 36, 0, 20),
+                    Position = UDim2.new(1, -46, 0.5, -10),
+                    BackgroundColor3 = Default,
+                    Text = "",
+                    AutoButtonColor = false,
+                    Parent = Frame,
+                })
+                Themed(Stroke(Swatch, Theme.Stroke, 1, 0.2), "Color", "Stroke")
+
+                local Panel = Create("Frame", {
+                    Size = UDim2.new(0, 220, 0, 150),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundColor3 = Theme.Secondary,
+                    BackgroundTransparency = 0.05,
+                    BorderSizePixel = 0,
+                    Visible = false,
+                    ZIndex = 60,
+                    Parent = Overlay,
+                })
+                Themed(Panel, "BackgroundColor3", "Secondary")
+                Themed(Stroke(Panel, Theme.Stroke, 1, 0.2), "Color", "Stroke")
+                Pad(Panel, 10, 10, 10, 10)
+
+                local SVBox = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 90),
+                    BackgroundColor3 = Color3.fromHSV(Hue, 1, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 61,
+                    Parent = Panel,
+                })
+                local WhiteGrad = Create("Frame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 61,
+                    Parent = SVBox,
+                })
+                Create("UIGradient", {
+                    Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1)),
+                    Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0, 0),
+                        NumberSequenceKeypoint.new(1, 1),
+                    }),
+                    Parent = WhiteGrad,
+                })
+                local BlackGrad = Create("Frame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundColor3 = Color3.new(0, 0, 0),
+                    BorderSizePixel = 0,
+                    ZIndex = 61,
+                    Parent = SVBox,
+                })
+                Create("UIGradient", {
+                    Rotation = 90,
+                    Color = ColorSequence.new(Color3.new(0, 0, 0), Color3.new(0, 0, 0)),
+                    Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0, 1),
+                        NumberSequenceKeypoint.new(1, 0),
+                    }),
+                    Parent = BlackGrad,
+                })
+
+                local SVCursor = Create("Frame", {
+                    Size = UDim2.new(0, 8, 0, 8),
+                    Position = UDim2.new(Sat, -4, 1 - Val, -4),
+                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 62,
+                    Parent = SVBox,
+                })
+                Stroke(SVCursor, Color3.new(0, 0, 0), 1, 0)
+
+                local HueBar = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 16),
+                    Position = UDim2.new(0, 0, 0, 100),
+                    BorderSizePixel = 0,
+                    ZIndex = 61,
+                    Parent = Panel,
+                })
+                Create("UIGradient", {
+                    Color = ColorSequence.new({
+                        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+                        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+                        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0)),
+                    }),
+                    Parent = HueBar,
+                })
+                local HueCursor = Create("Frame", {
+                    Size = UDim2.new(0, 4, 1, 4),
+                    Position = UDim2.new(Hue, -2, 0, -2),
+                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 62,
+                    Parent = HueBar,
+                })
+
+                local function UpdateColor(silent)
+                    local color = Color3.fromHSV(Hue, Sat, Val)
+                    Swatch.BackgroundColor3 = color
+                    SVBox.BackgroundColor3 = Color3.fromHSV(Hue, 1, 1)
+                    if not silent then
+                        task.spawn(Callback, color)
+                    end
+                end
+
+                local svDragging, hueDragging = false, false
+
+                SVBox.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        svDragging = true
+                    end
+                end)
+                HueBar.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        hueDragging = true
+                    end
+                end)
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        if svDragging or hueDragging then
+                            DoNotify(Notifications, "Colorpicker Tetiklendi", Name .. " rengi güncellendi.")
+                        end
+                        svDragging = false
+                        hueDragging = false
+                    end
+                end)
+                UserInputService.InputChanged:Connect(function(input)
+                    if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+                    if svDragging then
+                        local relX = math.clamp((input.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                        local relY = math.clamp((input.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                        Sat, Val = relX, 1 - relY
+                        SVCursor.Position = UDim2.new(Sat, -4, 1 - Val, -4)
+                        UpdateColor()
+                    elseif hueDragging then
+                        local relX = math.clamp((input.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
+                        Hue = relX
+                        HueCursor.Position = UDim2.new(Hue, -2, 0, -2)
+                        UpdateColor()
+                    end
+                end)
+
+                Swatch.MouseButton1Click:Connect(function()
+                    PlaySound(Sounds.Click, 0.3)
+                    if Panel.Visible then
+                        ClosePopup(Panel)
+                    else
+                        OpenPopup(Panel, Swatch, 6, 220, "right")
+                    end
+                end)
+
+                local API = { Instance = Frame }
+                function API:Set(color)
+                    local nh, ns, nv = color:ToHSV()
+                    Hue, Sat, Val = nh, ns, nv
+                    SVCursor.Position = UDim2.new(Sat, -4, 1 - Val, -4)
+                    HueCursor.Position = UDim2.new(Hue, -2, 0, -2)
+                    UpdateColor()
+                end
+                function API:Get()
+                    return Color3.fromHSV(Hue, Sat, Val)
                 end
                 return API
             end
@@ -1185,9 +1739,14 @@ function Spectrum:AddWindow(config)
                 local Name = cfg.Name or "Dropdown"
                 local Options = cfg.Options or {}
                 local Default = cfg.Default
+                local Multi = cfg.Multi or false
                 local Callback = cfg.Callback or function() end
                 local Notifications = cfg.Notifications
-                local Selected = Default or (Options[1] or nil)
+
+                local Selected = Multi and {} or (Default or (Options[1] or nil))
+                if Multi and Default then
+                    for _, v in ipairs(Default) do Selected[v] = true end
+                end
 
                 local Frame = BaseElement(36)
                 NameLabel(Frame, Name)
@@ -1196,7 +1755,7 @@ function Spectrum:AddWindow(config)
                     Size = UDim2.new(1, -(CONTROL_X + CONTROL_RIGHT_PAD), 0, 24),
                     Position = UDim2.new(0, CONTROL_X, 0.5, -12),
                     BackgroundColor3 = Theme.Secondary,
-                    Text = "  " .. tostring(Selected or "Seçiniz..."),
+                    Text = "  " .. (Multi and "Seçiniz..." or tostring(Selected or "Seçiniz...")),
                     Font = Enum.Font.Gotham,
                     TextSize = 11,
                     TextColor3 = Theme.Text,
@@ -1211,6 +1770,7 @@ function Spectrum:AddWindow(config)
 
                 local ListFrame = Create("Frame", {
                     Size = UDim2.new(0, 150, 0, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
                     BackgroundColor3 = Theme.Secondary,
                     BackgroundTransparency = 0.05,
                     BorderSizePixel = 0,
@@ -1222,18 +1782,34 @@ function Spectrum:AddWindow(config)
                 })
                 Themed(ListFrame, "BackgroundColor3", "Secondary")
                 Themed(Stroke(ListFrame, Theme.Stroke, 1, 0.2), "Color", "Stroke")
-                Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = ListFrame })
+                Create("UIListLayout", {
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    Parent = ListFrame,
+                })
                 Pad(ListFrame, 4, 4, 4, 4)
+
+                local function RefreshText()
+                    if Multi then
+                        local names = {}
+                        for opt, on in pairs(Selected) do
+                            if on then table.insert(names, opt) end
+                        end
+                        DropBtn.Text = "  " .. (#names > 0 and table.concat(names, ", ") or "Seçiniz...")
+                    else
+                        DropBtn.Text = "  " .. tostring(Selected or "Seçiniz...")
+                    end
+                end
 
                 local function BuildOptions()
                     for _, c in ipairs(ListFrame:GetChildren()) do
                         if c:IsA("TextButton") then c:Destroy() end
                     end
                     for _, opt in ipairs(Options) do
+                        local isSel = (Multi and Selected[opt]) or (not Multi and Selected == opt)
                         local OptBtn = Create("TextButton", {
                             Size = UDim2.new(1, 0, 0, 22),
                             BackgroundColor3 = Theme.Tertiary,
-                            BackgroundTransparency = (Selected == opt) and 0.1 or 1,
+                            BackgroundTransparency = isSel and 0.1 or 1,
                             Text = "  " .. tostring(opt),
                             Font = Enum.Font.Gotham,
                             TextSize = 11,
@@ -1247,25 +1823,70 @@ function Spectrum:AddWindow(config)
                         Themed(OptBtn, "TextColor3", "Text")
                         OptBtn.MouseButton1Click:Connect(function()
                             PlaySound(Sounds.Click, 0.25)
-                            Selected = opt
-                            DropBtn.Text = "  " .. tostring(Selected)
-                            ClosePopup(ListFrame)
+                            if Multi then
+                                Selected[opt] = not Selected[opt]
+                                OptBtn.BackgroundTransparency = Selected[opt] and 0.1 or 1
+                            else
+                                Selected = opt
+                                ClosePopup(ListFrame)
+                            end
+                            RefreshText()
                             DoNotify(Notifications, "Dropdown Tetiklendi", Name .. " -> " .. tostring(opt))
                             task.spawn(Callback, Selected)
                         end)
                     end
                 end
                 BuildOptions()
+                RefreshText()
 
                 DropBtn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click, 0.3)
-                    if ListFrame.Visible then ClosePopup(ListFrame) else OpenPopup(ListFrame, DropBtn, 4, DropBtn.AbsoluteSize.X, "right") end
+                    if ListFrame.Visible then
+                        ClosePopup(ListFrame)
+                    else
+                        OpenPopup(ListFrame, DropBtn, 4, DropBtn.AbsoluteSize.X, "right")
+                    end
                 end)
 
                 local API = { Instance = Frame }
-                function API:Refresh(newOptions) Options = newOptions BuildOptions() end
-                function API:Set(value) Selected = value DropBtn.Text = "  " .. tostring(Selected) BuildOptions() task.spawn(Callback, Selected) end
-                function API:Get() return Selected end
+                function API:Refresh(newOptions)
+                    Options = newOptions
+                    BuildOptions()
+                end
+                function API:Set(value)
+                    Selected = value
+                    RefreshText()
+                    BuildOptions()
+                    task.spawn(Callback, Selected)
+                end
+                function API:Get()
+                    return Selected
+                end
+                return API
+            end
+
+            function Section:AddLabel(cfg)
+                cfg = cfg or {}
+                local Text = type(cfg) == "string" and cfg or (cfg.Text or "Label")
+
+                local Frame = BaseElement(28)
+                local Lbl = Themed(Create("TextLabel", {
+                    Size = UDim2.new(1, -20, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    BackgroundTransparency = 1,
+                    Font = Enum.Font.Gotham,
+                    Text = Text,
+                    TextColor3 = Theme.SubText,
+                    TextSize = 11,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextWrapped = true,
+                    Parent = Frame,
+                }), "TextColor3", "SubText")
+
+                local API = { Instance = Frame }
+                function API:Set(text)
+                    Lbl.Text = text
+                end
                 return API
             end
 
@@ -1277,23 +1898,122 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- DASHBOARD TAB
+    -- STATS/DASHBOARD TAB (Control Panel)
     --=====================================================================
     if ShowControlPanel then
-        local DashTab = Window:AddTab("Dashboard")
+        local StatsTab = Window:AddTab("Dashboard", false)
 
-        -- SOL SÜTUN
-        local LeftSec = DashTab:AddSection("Profil & Sistem", "Left")
-        
-        local ProfileFrame = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 65),
+        local PanelFrame = Create("Frame", {
+            Name = "StatsPanelFrame",
+            Size = UDim2.new(1, -6, 0, 420),
+            BackgroundColor3 = Theme.Secondary,
+            BackgroundTransparency = 0.12,
+            BorderSizePixel = 0,
+            Parent = StatsTab.Page,
+        })
+        Themed(PanelFrame, "BackgroundColor3", "Secondary")
+        Themed(Stroke(PanelFrame, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
+        Pad(PanelFrame, 10, 10, 10, 10)
+
+        -- Performance Card
+        local PerformanceCard = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 60),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.1,
             BorderSizePixel = 0,
-            Parent = LeftSec.ElementHolder,
+            Parent = PanelFrame,
         })
-        Themed(ProfileFrame, "BackgroundColor3", "Tertiary")
-        Themed(Stroke(ProfileFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+        Themed(PerformanceCard, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(PerformanceCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0.02, 0),
+            Parent = PerformanceCard,
+        })
+
+        local function CreateStatWidget(title, defaultVal)
+            local Box = Create("Frame", {
+                Size = UDim2.new(0.23, 0, 1, -12),
+                BackgroundColor3 = Theme.Secondary,
+                BackgroundTransparency = 0.3,
+                BorderSizePixel = 0,
+                Parent = PerformanceCard,
+            })
+            Themed(Box, "BackgroundColor3", "Secondary")
+            Themed(Stroke(Box, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+
+            Themed(Create("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 18),
+                Position = UDim2.new(0, 0, 0, 6),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.GothamMedium,
+                Text = title,
+                TextColor3 = Theme.SubText,
+                TextSize = 10,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                Parent = Box,
+            }), "TextColor3", "SubText")
+
+            local ValLabel = Themed(Create("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 22),
+                Position = UDim2.new(0, 0, 0, 24),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.GothamBold,
+                Text = defaultVal,
+                TextColor3 = Theme.Accent,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                Parent = Box,
+            }), "TextColor3", "Accent")
+
+            return ValLabel
+        end
+
+        local FpsLabel    = CreateStatWidget("FPS", "60")
+        local PingLabel   = CreateStatWidget("PING", "0 ms")
+        local MemLabel    = CreateStatWidget("MEMORY", "0 MB")
+        local RecvLabel   = CreateStatWidget("DATA RECV", "0 KB/s")
+
+        local lastUpdate = tick()
+        local frameCount = 0
+
+        RunService.RenderStepped:Connect(function()
+            frameCount = frameCount + 1
+            local now = tick()
+            if now - lastUpdate >= 0.5 then
+                local fps = math.floor(frameCount / (now - lastUpdate))
+                FpsLabel.Text = tostring(fps)
+                frameCount = 0
+                lastUpdate = now
+
+                pcall(function()
+                    local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
+                    PingLabel.Text = tostring(ping) .. " ms"
+
+                    local mem = math.floor(StatsService:GetTotalMemoryUsageMb())
+                    MemLabel.Text = tostring(mem) .. " MB"
+
+                    local recv = math.floor(StatsService.Network.ServerStatsItem["Data Recv"]:GetValue())
+                    RecvLabel.Text = tostring(recv) .. " KB/s"
+                end)
+            end
+        end)
+
+        -- Profile Card
+        local ProfileCard = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 65),
+            Position = UDim2.new(0, 0, 0, 68),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            Parent = PanelFrame,
+        })
+        Themed(ProfileCard, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(ProfileCard, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
         local AvatarImg = Create("ImageLabel", {
             Size = UDim2.new(0, 50, 0, 50),
@@ -1301,31 +2021,33 @@ function Spectrum:AddWindow(config)
             BackgroundColor3 = Theme.Secondary,
             BackgroundTransparency = 0.5,
             Image = "rbxassetid://0",
-            Parent = ProfileFrame,
+            Parent = ProfileCard,
         })
         Themed(AvatarImg, "BackgroundColor3", "Secondary")
         Themed(Stroke(AvatarImg, Theme.Accent, 1, 0.2), "Color", "Accent")
 
         task.spawn(function()
             local content = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-            if AvatarImg and AvatarImg.Parent then AvatarImg.Image = content end
+            if AvatarImg and AvatarImg.Parent then
+                AvatarImg.Image = content
+            end
         end)
 
         Themed(Create("TextLabel", {
-            Size = UDim2.new(0.6, 0, 0, 18),
+            Size = UDim2.new(0.5, -60, 0, 18),
             Position = UDim2.new(0, 66, 0, 10),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
             Text = LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")",
             TextColor3 = Theme.Text,
-            TextSize = 12,
+            TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextTruncate = Enum.TextTruncate.AtEnd,
-            Parent = ProfileFrame,
+            Parent = ProfileCard,
         }), "TextColor3", "Text")
 
         Themed(Create("TextLabel", {
-            Size = UDim2.new(0.6, 0, 0, 14),
+            Size = UDim2.new(0.5, -60, 0, 14),
             Position = UDim2.new(0, 66, 0, 32),
             BackgroundTransparency = 1,
             Font = Enum.Font.Gotham,
@@ -1333,217 +2055,53 @@ function Spectrum:AddWindow(config)
             TextColor3 = Theme.SubText,
             TextSize = 10,
             TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = ProfileFrame,
+            Parent = ProfileCard,
         }), "TextColor3", "SubText")
 
-        local StatsSec = DashTab:AddSection("Performans", "Left")
-        local FpsLbl  = StatsSec:AddButton({ Name = "FPS: 60" })
-        local PingLbl = StatsSec:AddButton({ Name = "Ping: 0 ms" })
-        local MemLbl  = StatsSec:AddButton({ Name = "Bellek: 0 MB" })
-
-        local lastUpdate = tick()
-        local frameCount = 0
-        RunService.RenderStepped:Connect(function()
-            frameCount = frameCount + 1
-            local now = tick()
-            if now - lastUpdate >= 0.5 then
-                local fps = math.floor(frameCount / (now - lastUpdate))
-                FpsLbl.Instance:FindFirstChildOfClass("TextLabel").Text = "FPS: " .. tostring(fps)
-                frameCount = 0
-                lastUpdate = now
-
-                pcall(function()
-                    local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
-                    PingLbl.Instance:FindFirstChildOfClass("TextLabel").Text = "Ping: " .. tostring(ping) .. " ms"
-
-                    local mem = math.floor(StatsService:GetTotalMemoryUsageMb())
-                    MemLbl.Instance:FindFirstChildOfClass("TextLabel").Text = "Bellek: " .. tostring(mem) .. " MB"
-                end)
-            end
+        local PlaceName = "Yükleniyor..."
+        pcall(function()
+            local info = MarketplaceService:GetProductInfo(game.PlaceId)
+            if info and info.Name then PlaceName = info.Name end
         end)
 
-        -- SAĞ SÜTUN
-        local RightSec = DashTab:AddSection("Karakter Durumu", "Right")
-        local PosLbl = RightSec:AddButton({ Name = "CFrame: 0, 0, 0" })
-        local VelLbl = RightSec:AddButton({ Name = "Velocity: 0, 0, 0" })
-
-        RunService.Heartbeat:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = LocalPlayer.Character.HumanoidRootPart
-                local pos = hrp.Position
-                local vel = hrp.AssemblyLinearVelocity
-                PosLbl.Instance:FindFirstChildOfClass("TextLabel").Text = string.format("Pos: %.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z)
-                VelLbl.Instance:FindFirstChildOfClass("TextLabel").Text = string.format("Vel: %.1f, %.1f, %.1f", vel.X, vel.Y, vel.Z)
-            end
-        end)
-
-        local ToolSec = DashTab:AddSection("Envanterdeki Toollar", "Right")
-        local ToolListLbl = ToolSec:AddButton({ Name = "Toollar Yükleniyor..." })
-
-        local function RefreshTools()
-            local toolNames = {}
-            if LocalPlayer.Character then
-                for _, item in ipairs(LocalPlayer.Character:GetChildren()) do
-                    if item:IsA("Tool") then table.insert(toolNames, "[Eklendi] " .. item.Name) end
-                end
-            end
-            if LocalPlayer:FindFirstChild("Backpack") then
-                for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do
-                    if item:IsA("Tool") then table.insert(toolNames, item.Name) end
-                end
-            end
-            ToolListLbl.Instance:FindFirstChildOfClass("TextLabel").Text = #toolNames > 0 and table.concat(toolNames, ", ") or "Tool Yok"
-        end
-        task.spawn(function()
-            while task.wait(2) do RefreshTools() end
-        end)
-
-        -- ALT SÜTUN
-        local PlayerSec = DashTab:AddSection("Oyuncu Listesi & Yönetim", "Bottom")
-        
-        local PlayerListContainer = Create("Frame", {
-            Name = "PlayerListContainer",
-            Size = UDim2.new(1, 0, 0, 200),
-            BackgroundColor3 = Theme.Tertiary,
-            BackgroundTransparency = 0.2,
-            BorderSizePixel = 0,
-            Parent = PlayerSec.ElementHolder,
-        })
-        Themed(PlayerListContainer, "BackgroundColor3", "Tertiary")
-        Themed(Stroke(PlayerListContainer, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-
-        local PlayerScroll = Create("ScrollingFrame", {
-            Size = UDim2.new(1, 0, 1, 0),
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(0.45, 0, 0, 16),
+            Position = UDim2.new(0.53, 0, 0, 10),
             BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ScrollBarThickness = 3,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            AutomaticCanvasSize = Enum.AutomaticSize.Y,
-            Parent = PlayerListContainer,
+            Font = Enum.Font.GothamBold,
+            Text = "🎮 " .. PlaceName,
+            TextColor3 = Theme.Accent,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            Parent = ProfileCard,
+        }), "TextColor3", "Accent")
+
+        local CopyPlaceBtn = Create("TextButton", {
+            Size = UDim2.new(0, 130, 0, 22),
+            Position = UDim2.new(1, -138, 0, 32),
+            BackgroundColor3 = Theme.Secondary,
+            Text = "📋 Place ID: " .. tostring(game.PlaceId),
+            Font = Enum.Font.GothamMedium,
+            TextSize = 9,
+            TextColor3 = Theme.SubText,
+            AutoButtonColor = false,
+            Parent = ProfileCard,
         })
-        Pad(PlayerScroll, 6, 6, 6, 6)
-        Create("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = PlayerScroll })
+        Themed(CopyPlaceBtn, "BackgroundColor3", "Secondary")
+        Themed(CopyPlaceBtn, "TextColor3", "SubText")
+        Themed(Stroke(CopyPlaceBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-        local activeSpectateTarget = nil
-
-        local function UpdatePlayerList()
-            for _, child in ipairs(PlayerScroll:GetChildren()) do
-                if child:IsA("Frame") then child:Destroy() end
+        CopyPlaceBtn.MouseButton1Click:Connect(function()
+            ClickBounce(CopyPlaceBtn)
+            PlaySound(Sounds.Click, 0.3)
+            if setclipboard then
+                setclipboard(tostring(game.PlaceId))
+                Window:Notify({ Title = "Kopyalandı!", Content = "Place ID panoya kopyalandı.", Duration = 2 })
+            else
+                Window:Notify({ Title = "Hata", Content = "Executor'ınız setclipboard desteklemiyor.", Duration = 2 })
             end
-
-            for _, targetPlayer in ipairs(Players:GetPlayers()) do
-                if targetPlayer ~= LocalPlayer then
-                    local Row = Create("Frame", {
-                        Size = UDim2.new(1, 0, 0, 36),
-                        BackgroundColor3 = Theme.Secondary,
-                        BackgroundTransparency = 0.2,
-                        BorderSizePixel = 0,
-                        Parent = PlayerScroll,
-                    })
-                    Themed(Row, "BackgroundColor3", "Secondary")
-                    Themed(Stroke(Row, Theme.Stroke, 1, 0.4), "Color", "Stroke")
-
-                    local PImg = Create("ImageLabel", {
-                        Size = UDim2.new(0, 28, 0, 28),
-                        Position = UDim2.new(0, 4, 0.5, -14),
-                        BackgroundColor3 = Theme.Tertiary,
-                        BackgroundTransparency = 0.5,
-                        Image = "rbxassetid://0",
-                        Parent = Row,
-                    })
-                    Themed(PImg, "BackgroundColor3", "Tertiary")
-                    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = PImg })
-
-                    task.spawn(function()
-                        local pThumb = Players:GetUserThumbnailAsync(targetPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-                        if PImg and PImg.Parent then PImg.Image = pThumb end
-                    end)
-
-                    Themed(Create("TextLabel", {
-                        Size = UDim2.new(1, -160, 1, 0),
-                        Position = UDim2.new(0, 38, 0, 0),
-                        BackgroundTransparency = 1,
-                        Font = Enum.Font.GothamMedium,
-                        Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")",
-                        TextColor3 = Theme.Text,
-                        TextSize = 11,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextTruncate = Enum.TextTruncate.AtEnd,
-                        Parent = Row,
-                    }), "TextColor3", "Text")
-
-                    local isSpectating = (activeSpectateTarget == targetPlayer)
-                    local SpectateBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 52, 0, 22),
-                        Position = UDim2.new(1, -58, 0.5, -11),
-                        BackgroundColor3 = isSpectating and Theme.Accent or Theme.Tertiary,
-                        BackgroundTransparency = 0.1,
-                        Text = isSpectating and "İzleniyor" or "İzle",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 10,
-                        TextColor3 = Theme.Text,
-                        AutoButtonColor = false,
-                        Parent = Row,
-                    })
-                    Themed(SpectateBtn, "BackgroundColor3", isSpectating and "Accent" or "Tertiary")
-                    Themed(SpectateBtn, "TextColor3", "Text")
-
-                    SpectateBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(SpectateBtn)
-                        PlaySound(Sounds.Click, 0.3)
-                        if activeSpectateTarget == targetPlayer then
-                            activeSpectateTarget = nil
-                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                                workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
-                            end
-                            Window:Notify({ Title = "Spectate Kapalı", Content = "Kendi kameranıza dönüldü.", Duration = 2 })
-                        else
-                            activeSpectateTarget = targetPlayer
-                            if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
-                                workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
-                            end
-                            Window:Notify({ Title = "Spectate Açık", Content = targetPlayer.Name .. " izleniyor.", Duration = 2 })
-                        end
-                        UpdatePlayerList()
-                    end)
-
-                    local TeleportBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 52, 0, 22),
-                        Position = UDim2.new(1, -116, 0.5, -11),
-                        BackgroundColor3 = Theme.Accent,
-                        BackgroundTransparency = 0.1,
-                        Text = "Işınlan",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 10,
-                        TextColor3 = Color3.new(1, 1, 1),
-                        AutoButtonColor = false,
-                        Parent = Row,
-                    })
-                    Themed(TeleportBtn, "BackgroundColor3", "Accent")
-
-                    TeleportBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(TeleportBtn)
-                        PlaySound(Sounds.Click, 0.3)
-                        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                            Window:Notify({ Title = "Işınlanma", Content = targetPlayer.Name .. " adlı oyuncuya ışınlanıldı.", Duration = 2 })
-                        end
-                    end)
-                end
-            end
-        end
-
-        Players.PlayerAdded:Connect(UpdatePlayerList)
-        Players.PlayerRemoving:Connect(function(plr)
-            if activeSpectateTarget == plr then
-                activeSpectateTarget = nil
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
-                end
-            end
-            UpdatePlayerList()
         end)
-        UpdatePlayerList()
     end
 
     return Window
