@@ -1,161 +1,458 @@
-local Spectrum = loadstring(game:HttpGet("https://raw.githubusercontent.com/alperalp808/Spectrum-UI-Library/refs/heads/main/Spectrum%20Source"))()
-
--- 1. Pencere Oluşturma ve Key Sistemi Testi
-local Window = Spectrum:AddWindow({
-    Name = "Spectrum UI | Premium Panel",
-    Theme = "Aqua", -- Kullanılabilir Temalar: Green, Dark, Foggy, Sun, Aqua, Crimson, Light
-    ToggleKeybind = Enum.KeyCode.RightControl, -- Menüyü açıp kapatma tuşu
-    Size = UDim2.new(0, 640, 0, 440),
-    Notifications = true, -- Global bildirimler açık/kapalı
-    ControlPanel = true,  -- Üst kısımdaki Oyuncu Kontrol Paneli gösterilsin mi?
+--[[
+    ============================================================
+    SPECTRUM UI v3.7.0 - KAPSAMLI TEST SCRIPTI
+    ============================================================
     
-    -- Opsiyonel Giriş Doğrulama Sistem (Key System)
+    Bu script Spectrum UI kütüphanesinin tüm özelliklerini test eder,
+    özellikle yeni 2-Sütun (Two-Column) layout sistemini vurgular.
+    
+    Test İçeriği:
+    1. ✅ 2-Sütun Modu Açık Tab'lar (Left/Right Sections)
+    2. ✅ Standart Tek-Sütun Tab'lar (Single Section)
+    3. ✅ Tüm UI Elementleri (Button, Toggle, Slider, vb.)
+    4. ✅ Tema Sistemi
+    5. ✅ Notifikasyon Sistemi
+    6. ✅ Key System (Giriş Doğrulama)
+]]
+
+-- Kütüphaneyi yükle
+local Spectrum = loadstring(game:HttpGet("https://raw.githubusercontent.com/alperalp808/Spectrum-UI-Library/refs/heads/main/Spectrum%20Update%20Test%20Source"))()
+
+-- Eğer online yükleme başarısız olursa, lokal dosyadan yükle
+if not Spectrum then
+    Spectrum = loadstring(readfile("spectrum_updated.lua"))()
+end
+
+--=====================================================================
+-- 1. PENCERE OLUŞTURMA
+--=====================================================================
+local Window = Spectrum:AddWindow({
+    Name = "Spectrum UI v3.7.0 | Test Panel",
+    Theme = "Aqua", -- Temalar: Green, Dark, Foggy, Sun, Aqua, Crimson, Light
+    ToggleKeybind = Enum.KeyCode.RightControl,
+    Size = UDim2.new(0, 840, 0, 520),
+    Notifications = true,
+    ControlPanel = true,
+    
+    -- Key System (Giriş Doğrulama) - Test için
     KeySystem = {
-        Enabled = true, -- Aktif etmek için true yapın
-        Title = "Spectrum Güvenlik Girişi",
-        Note = "Devam etmek için lisans bilgilerinizi giriniz.",
+        Enabled = false, -- Test yapmak için false, gerçek kullanımda true yapın
+        Title = "Spectrum Security",
+        Note = "Lütfen kimlik bilgilerinizi girin.",
         Users = {
             { User = "admin", Pass = "1234" },
-            { User = "player", Pass = "spectrum2026" }
+            { User = "user", Pass = "spectrum2026" }
         }
     }
 })
 
--- Açılışta test bildirimi
+-- Hoş geldiniz bildirimi
 Window:Notify({
-    Title = "Hoş Geldiniz!",
-    Content = "Spectrum UI başarıyla yüklendi ve test paneli hazır.",
+    Title = "🎉 Hoş Geldiniz!",
+    Content = "Spectrum UI v3.7.0 başarıyla yüklendi. 2-Sütun sistem aktif.",
     Duration = 4
 })
 
 --=====================================================================
--- 2. SEKMELERİN OLUŞTURULMASI
+-- 2. TAB'LARI OLUŞTUR
 --=====================================================================
-local MainTab = Window:AddTab("Ana Kontroller")
-local SettingsTab = Window:AddTab("Ayarlar & Temalar")
-local AdvancedTab = Window:AddTab("Gelişmiş Özellikler")
+
+-- TAB 1: 2-Sütun Modu (true)
+local TwoColumnTab = Window:AddTab("📊 2-Sütun Modu", true)
+
+-- TAB 2: Tek-Sütun Modu (false)
+local SingleColumnTab = Window:AddTab("🎛️ Tek-Sütun Modu", false)
+
+-- TAB 3: Tema & Ayarlar (Tek-Sütun)
+local SettingsTab = Window:AddTab("⚙️ Ayarlar", false)
+
+-- TAB 4: Gelişmiş Özellikler (Tek-Sütun)
+local AdvancedTab = Window:AddTab("🚀 Gelişmiş", false)
 
 --=====================================================================
--- BÖLÜM 1: ANA KONTROLLER (MainTab)
+-- 3. 2-SÜTUN TAB DOLDURMA (TwoColumnTab)
 --=====================================================================
-local GeneralSection = MainTab:AddSection("Genel İşlemler")
+print("📌 [Spectrum Test] 2-Sütun Tab'ı oluşturuluyor...")
 
--- Buton Testi
-GeneralSection:AddButton({
-    Name = "Test Bildirimi Gönder",
+-- SOL TARAF SEKSİYON
+local LeftSection = TwoColumnTab:AddSection("⬅️ Sol Bölüm", "Left")
+
+LeftSection:AddLabel({ Text = "🔗 Bağlantı Kontrolleri" })
+
+LeftSection:AddButton({
+    Name = "Test Butonu 1",
     Notifications = true,
     Callback = function()
+        print("✅ Test Butonu 1 çalıştı!")
         Window:Notify({
-            Title = "Buton Çalıştı",
-            Content = "Özel bildirim başarıyla tetiklendi!",
-            Duration = 2.5
+            Title = "✨ Buton Çalıştı",
+            Content = "Sol bölümdeki 1. buton tetiklendi.",
+            Duration = 2
         })
     end
 })
 
--- Toggle Testi
-local AutoFarmToggle = GeneralSection:AddToggle({
-    Name = "Otomatik Farm (Auto Farm)",
+LeftSection:AddButton({
+    Name = "Test Butonu 2",
+    Notifications = true,
+    Callback = function()
+        print("✅ Test Butonu 2 çalıştı!")
+        Window:Notify({
+            Title = "⚡ Buton Çalıştı",
+            Content = "Sol bölümdeki 2. buton tetiklendi.",
+            Duration = 2
+        })
+    end
+})
+
+local Toggle1 = LeftSection:AddToggle({
+    Name = "Özellik Açık/Kapalı",
     Default = false,
     Notifications = true,
     Callback = function(state)
-        print("Auto Farm Durumu:", state)
+        print("🔄 Toggle durumu:", state)
+        if state then
+            Window:Notify({
+                Title = "✅ Açıldı",
+                Content = "Sol taraf toggle özelliği aktif.",
+                Duration = 2
+            })
+        else
+            Window:Notify({
+                Title = "❌ Kapatıldı",
+                Content = "Sol taraf toggle özelliği inaktif.",
+                Duration = 2
+            })
+        end
     end
 })
 
--- Toggle içine Keybind ekleme testi
-AutoFarmToggle:AddKeybind("F")
+LeftSection:AddSlider({
+    Name = "Hız Kontrolü",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Increment = 5,
+    Notifications = true,
+    Callback = function(value)
+        print("📊 Slider değeri:", value)
+    end
+})
 
--- Keybind Testi (Normal & Toggle Mod)
-GeneralSection:AddKeybind({
-    Name = "Hızlı Işınlanma Tuşu",
-    Default = Enum.KeyCode.Q,
-    Mode = "Button", -- veya "Toggle"
+LeftSection:AddLabel({ Text = "💬 Metin Girdileri" })
+
+LeftSection:AddTextbox({
+    Name = "Oyuncu Adı",
+    PlaceholderText = "Bir oyuncu adı girin...",
+    Default = "",
+    Notifications = true,
+    Callback = function(text)
+        print("📝 Metin girişi:", text)
+    end
+})
+
+-- SAĞ TARAF SEKSİYON
+local RightSection = TwoColumnTab:AddSection("➡️ Sağ Bölüm", "Right")
+
+RightSection:AddLabel({ Text = "🎨 Renk & Tercihler" })
+
+local ColorPicker = RightSection:AddColorpicker({
+    Name = "Renk Seçici",
+    Default = Color3.fromRGB(0, 204, 255),
+    Notifications = true,
+    Callback = function(color)
+        print("🎨 Seçilen renk RGB:", color.R * 255, color.G * 255, color.B * 255)
+    end
+})
+
+RightSection:AddLabel({ Text = "🎯 Seçim Menüleri" })
+
+local Dropdown1 = RightSection:AddDropdown({
+    Name = "Mod Seçimi",
+    Options = {"Saldırı", "Savunma", "Denge", "Özel"},
+    Default = "Denge",
+    Notifications = true,
+    Callback = function(selected)
+        print("🎯 Seçilen mod:", selected)
+    end
+})
+
+local MultiDropdown = RightSection:AddDropdown({
+    Name = "Çoklu Seçim",
+    Options = {"Opsiyon 1", "Opsiyon 2", "Opsiyon 3", "Opsiyon 4"},
+    Default = {"Opsiyon 1", "Opsiyon 3"},
+    Multi = true,
+    Notifications = true,
+    Callback = function(selected)
+        print("🎯 Seçilen opsiyon sayısı:", #selected)
+    end
+})
+
+local Toggle2 = RightSection:AddToggle({
+    Name = "Görünüm Modu",
+    Default = true,
+    Notifications = true,
+    Callback = function(state)
+        print("🔄 Görünüm durumu:", state)
+    end
+})
+
+--=====================================================================
+-- 4. TEK-SÜTUN TAB DOLDURMA (SingleColumnTab)
+--=====================================================================
+print("📌 [Spectrum Test] Tek-Sütun Tab'ı oluşturuluyor...")
+
+local ControlSection = SingleColumnTab:AddSection("🎮 Oyun Kontrolleri")
+
+ControlSection:AddLabel({ Text = "Standart tek sütun layout'ta tüm öğeler sırayla dizilir." })
+
+ControlSection:AddButton({
+    Name = "Geniş Buton Örneği",
     Notifications = true,
     Callback = function()
-        print("Işınlanma tuşuna basıldı!")
+        Window:Notify({
+            Title = "🎮 Kontrol Çalıştı",
+            Content = "Tek-sütun tab'daki buton tetiklendi.",
+            Duration = 2
+        })
     end
 })
 
--- Slider Testi
-GeneralSection:AddSlider({
-    Name = "Hız (WalkSpeed) Ayarı",
-    Min = 16,
-    Max = 250,
-    Default = 16,
+local ModeSlider = ControlSection:AddSlider({
+    Name = "Zorluk Seviyesi",
+    Min = 1,
+    Max = 10,
+    Default = 5,
     Increment = 1,
     Notifications = true,
     Callback = function(value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+        print("📊 Zorluk seviyesi:", value)
+    end
+})
+
+local GameToggle = ControlSection:AddToggle({
+    Name = "Oyunu Başlat",
+    Default = false,
+    Notifications = true,
+    Callback = function(state)
+        if state then
+            print("▶️ Oyun başlatıldı!")
+        else
+            print("⏸️ Oyun durduruldu!")
+        end
+    end
+})
+
+local GameDropdown = ControlSection:AddDropdown({
+    Name = "Harita Seçimi",
+    Options = {"Orman", "Çöl", "Kar", "Kasaba", "Kuleler"},
+    Default = "Orman",
+    Notifications = true,
+    Callback = function(selected)
+        print("🗺️ Seçilen harita:", selected)
+    end
+})
+
+ControlSection:AddLabel({ Text = "Yeterli kontrol alanı bu bölümde bulunmaktadır." })
+
+local AdvancedToggle = ControlSection:AddToggle({
+    Name = "Gelişmiş Mod",
+    Default = false,
+    Notifications = true,
+    Callback = function(state)
+        print("🚀 Gelişmiş mod:", tostring(state))
+    end
+})
+
+--=====================================================================
+-- 5. AYARLAR TAB'I (SettingsTab)
+--=====================================================================
+print("📌 [Spectrum Test] Ayarlar Tab'ı oluşturuluyor...")
+
+local ThemeSection = SettingsTab:AddSection("🎨 Tema Seçimi")
+
+ThemeSection:AddLabel({ Text = "Aşağıdaki temalardan birini seçin:" })
+
+local ThemeDropdown = ThemeSection:AddDropdown({
+    Name = "Tema",
+    Options = {"Green", "Dark", "Foggy", "Sun", "Aqua", "Crimson", "Light"},
+    Default = "Aqua",
+    Notifications = true,
+    Callback = function(theme)
+        print("🎨 Tema değiştirildi:", theme)
+        Window:SetTheme(theme)
+        Window:Notify({
+            Title = "🎨 Tema Güncellendi",
+            Content = "Tema başarıyla '" .. theme .. "' olarak değiştirildi.",
+            Duration = 2
+        })
+    end
+})
+
+local NotificationToggle = ThemeSection:AddToggle({
+    Name = "Bildirimleri Aç/Kapat",
+    Default = true,
+    Notifications = false,
+    Callback = function(state)
+        Window.GlobalNotifications = state
+        print("📢 Bildirimler:", tostring(state))
+    end
+})
+
+local KeybindSection = SettingsTab:AddSection("⌨️ Tuş Ayarları")
+
+KeybindSection:AddLabel({ Text = "Butonlara özel kısayollar ekleyin:" })
+
+local TestButton = KeybindSection:AddButton({
+    Name = "Kısayolu Destekli Buton",
+    Notifications = true,
+    Callback = function()
+        print("🔘 Buton tetiklendi!")
+    end
+})
+
+TestButton:AddKeybind("F")
+
+local TestToggle = KeybindSection:AddToggle({
+    Name = "Kısayolu Destekli Toggle",
+    Default = false,
+    Notifications = true,
+    Callback = function(state)
+        print("Toggle:", state)
+    end
+})
+
+TestToggle:AddKeybind("G")
+
+local TestKeybind = KeybindSection:AddKeybind({
+    Name = "Özel Keybind",
+    Default = Enum.KeyCode.H,
+    Mode = "Toggle",
+    Notifications = true,
+    Callback = function(state)
+        print("Keybind çalıştı - Durum:", tostring(state))
+    end
+})
+
+--=====================================================================
+-- 6. GELİŞMİŞ ÖZELLİKLER TAB'I (AdvancedTab)
+--=====================================================================
+print("📌 [Spectrum Test] Gelişmiş Özellikler Tab'ı oluşturuluyor...")
+
+local InfoSection = AdvancedTab:AddSection("ℹ️ Sistem Bilgileri")
+
+InfoSection:AddLabel({ Text = "📋 Spectrum UI v3.7.0 Bilgileri:" })
+InfoSection:AddLabel({ Text = "✨ Yeni Özellik: 2-Sütun Tab Desteği" })
+InfoSection:AddLabel({ Text = "🎨 7 Tema Seçeneği" })
+InfoSection:AddLabel({ Text = "🔊 Ses Efektleri Desteği" })
+InfoSection:AddLabel({ Text = "🔐 Yerleşik Key System" })
+
+local FeatureSection = AdvancedTab:AddSection("🎯 Özellik Testi")
+
+FeatureSection:AddButton({
+    Name = "Başarı Bildirimi Göster",
+    Notifications = true,
+    Callback = function()
+        Window:Notify({
+            Title = "✅ Başarı",
+            Content = "Bu bir başarı bildirimidir.",
+            Duration = 3
+        })
+    end
+})
+
+FeatureSection:AddButton({
+    Name = "Hata Bildirimi Göster",
+    Notifications = true,
+    Callback = function()
+        Window:Notify({
+            Title = "❌ Hata",
+            Content = "Bu bir hata bildirimidir.",
+            Duration = 3
+        })
+    end
+})
+
+FeatureSection:AddButton({
+    Name = "Uyarı Bildirimi Göster",
+    Notifications = true,
+    Callback = function()
+        Window:Notify({
+            Title = "⚠️ Uyarı",
+            Content = "Bu bir uyarı bildirimidir.",
+            Duration = 3
+        })
+    end
+})
+
+FeatureSection:AddSlider({
+    Name = "Bildirim Süresi (Sn)",
+    Min = 1,
+    Max = 10,
+    Default = 3,
+    Increment = 1,
+    Callback = function(value)
+        print("Bildirim süresi:", value)
+    end
+})
+
+local DemoSection = AdvancedTab:AddSection("🎪 Canlı Demo")
+
+DemoSection:AddLabel({ Text = "Tüm Elementleri Açıklamak:" })
+
+DemoSection:AddToggle({
+    Name = "Canlı Gösteri",
+    Default = false,
+    Notifications = false,
+    Callback = function(state)
+        if state then
+            print("🎪 Canlı gösteri başladı!")
+            Window:Notify({
+                Title = "🎪 Canlı Gösteri",
+                Content = "Tüm özelliklerin demo gösterimi başladı.",
+                Duration = 2
+            })
+        else
+            print("🎪 Canlı gösteri durdu!")
         end
     end
 })
 
 --=====================================================================
--- BÖLÜM 2: GELİŞMİŞ BİLEŞENLER (SettingsTab)
+-- 7. KONSOL ÇIKTI
 --=====================================================================
-local ConfigSection = SettingsTab:AddSection("Arayüz Yapılandırması")
-
--- Textbox Testi
-ConfigSection:AddTextbox({
-    Name = "Özel Mesaj Gönder",
-    PlaceholderText = "Buraya yazı yazın...",
-    Default = "",
-    Notifications = true,
-    Callback = function(text)
-        print("Girilen Metin:", text)
-    end
-})
-
--- Colorpicker Testi
-ConfigSection:AddColorpicker({
-    Name = "Arayüz Vurgu Rengi",
-    Default = Color3.fromRGB(0, 204, 255),
-    Notifications = true,
-    Callback = function(color)
-        print("Seçilen Renk:", color)
-    end
-})
-
--- Dropdown Testi (Tekli Seçim)
-ConfigSection:AddDropdown({
-    Name = "Tema Seçimi",
-    Options = {"Aqua", "Green", "Dark", "Foggy", "Sun", "Crimson", "Light"},
-    Default = "Aqua",
-    Multi = false,
-    Notifications = true,
-    Callback = function(selectedTheme)
-        Window:SetTheme(selectedTheme)
-    end
-})
-
--- Dropdown Testi (Çoklu Seçim)
-ConfigSection:AddDropdown({
-    Name = "Aktif Modüller",
-    Options = {"ESP", "Aimbot", "GodMode", "Fly", "Noclip"},
-    Default = {"ESP"},
-    Multi = true,
-    Notifications = true,
-    Callback = function(selectedList)
-        print("Seçilen Modüller güncellendi!")
-    end
-})
+print("\n" .. string.rep("=", 60))
+print(" ✅ SPECTRUM UI v3.7.0 TEST SCRIPTI BAŞARILI")
+print(string.rep("=", 60))
+print("\n📊 OLUŞTURULAN YAPILARIN ÖZETİ:")
+print("  ├─ 2-Sütun Tab: 2 Section (Sol + Sağ)")
+print("  ├─ Tek-Sütun Tab: 1 Section")
+print("  ├─ Ayarlar Tab: Tema & Kısayol Yönetimi")
+print("  ├─ Gelişmiş Tab: Bilgi & Demo")
+print("  └─ Dashboard Tab: (Otomatik)")
+print("\n🎮 TEST KONTROL TUŞLARI:")
+print("  ├─ RightControl: Menüyü Aç/Kapat")
+print("  ├─ F: Kısayolu Destekli Buton")
+print("  ├─ G: Kısayolu Destekli Toggle")
+print("  └─ H: Özel Keybind (Toggle Modu)")
+print("\n🎨 KULLANILABILIR TEMALAR:")
+print("  Green | Dark | Foggy | Sun | Aqua | Crimson | Light")
+print("\n📌  2-SÜTUN MODU HAKKINDA:")
+print("  • Tab oluştururken 2. parametre olarak TRUE yazın")
+print("  • Left/Right seçeneğiyle iki taraflı section ekleyin")
+print("  • Normal modda False kullanarak tek sütun elde edin")
+print("\n" .. string.rep("=", 60) .. "\n")
 
 --=====================================================================
--- BÖLÜM 3: BİLGİLENDİRME & DİĞERLERİ (AdvancedTab)
+-- 8. DYNAMIC FUNCTIONS ÖRNEĞI
 --=====================================================================
-local InfoSection = AdvancedTab:AddSection("Sistem Bilgileri")
 
--- Label Testi
-local StatusLabel = InfoSection:AddLabel({
-    Text = "Durum: Sistem kararlı ve çalışıyor."
-})
+-- Tema değiştirmek için fonksiyon
+function SetCustomTheme(themeName)
+    Window:SetTheme(themeName)
+    print("🎨 Tema değiştirildi:", themeName)
+end
 
-InfoSection:AddButton({
-    Name = "Durum Metnini Güncelle",
-    Notifications = false,
-    Callback = function()
-        StatusLabel:Set("Durum: Son test zamanı - " .. os.date("%H:%M:%S"))
-    end
-})
+-- Tab Kontrolü
+print("✅ Tüm Tab'lar başarıyla oluşturuldu!")
+print("✅ Test başlatıldı. Menüyü açmak için RightControl tuşuna basın.")
