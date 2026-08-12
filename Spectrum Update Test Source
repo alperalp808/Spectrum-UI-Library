@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.8.0 (Custom Layout & Dashboard Edition)
+    SPECTRUM UI LIBRARY  |  v3.9.0 (Bugfixes & Enhanced Dashboard)
     ============================================================
 ]]
 
@@ -9,7 +9,6 @@ local UserInputService  = game:GetService("UserInputService")
 local Players            = game:GetService("Players")
 local SoundService       = game:GetService("SoundService")
 local Debris             = game:GetService("Debris")
-local MarketplaceService = game:GetService("MarketplaceService")
 local StatsService       = game:GetService("Stats")
 local RunService         = game:GetService("RunService")
 
@@ -220,7 +219,7 @@ function Spectrum:AddWindow(config)
     Window.Tabs = {}
     Window.ToggleKeybind = ToggleKeybind
     Window.GlobalNotifications = GlobalNotifications
-    Window.Open = true -- Başlangıçta gözükür
+    Window.Open = true
     Window.Minimized = false
     Window.Authenticated = not KeySystemCfg.Enabled
 
@@ -251,7 +250,7 @@ function Spectrum:AddWindow(config)
         BackgroundColor3 = Theme.Background,
         BackgroundTransparency = 0.32,
         BorderSizePixel = 0,
-        Visible = true, -- Ekranda doğrudan görünür
+        Visible = true,
         Parent = ScreenGui,
     })
     Themed(Main, "BackgroundColor3", "Background")
@@ -264,6 +263,7 @@ function Spectrum:AddWindow(config)
         BackgroundColor3 = Theme.Secondary,
         BackgroundTransparency = 0.2,
         BorderSizePixel = 0,
+        ZIndex = 10,
         Parent = Main,
     })
     Themed(TopBar, "BackgroundColor3", "Secondary")
@@ -273,6 +273,7 @@ function Spectrum:AddWindow(config)
         BackgroundColor3 = Theme.Accent,
         BackgroundTransparency = 0.4,
         BorderSizePixel = 0,
+        ZIndex = 11,
         Parent = TopBar,
     }), "BackgroundColor3", "Accent")
 
@@ -286,10 +287,11 @@ function Spectrum:AddWindow(config)
         TextColor3 = Theme.Text,
         TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 11,
         Parent = TopBar,
     }), "TextColor3", "Text")
 
-    -- THEME DROPDOWN
+    -- THEME DROPDOWN (ZIndex yüksek tutuldu ki Tab/Section üstünde kalsın)
     local ThemeDropdownBtn = Create("TextButton", {
         Name = "ThemeDropdownBtn",
         Size = UDim2.new(0, 90, 0, 24),
@@ -301,6 +303,7 @@ function Spectrum:AddWindow(config)
         TextSize = 11,
         TextColor3 = Theme.SubText,
         AutoButtonColor = false,
+        ZIndex = 12,
         Parent = TopBar,
     })
     Themed(ThemeDropdownBtn, "BackgroundColor3", "Tertiary")
@@ -316,7 +319,7 @@ function Spectrum:AddWindow(config)
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Visible = false,
-        ZIndex = 80,
+        ZIndex = 100, -- En üste çıkarıldı
         Parent = Main,
     })
     Themed(ThemeListFrame, "BackgroundColor3", "Secondary")
@@ -353,7 +356,7 @@ function Spectrum:AddWindow(config)
             TextSize = 10,
             TextColor3 = Theme.Text,
             AutoButtonColor = false,
-            ZIndex = 81,
+            ZIndex = 101,
             Parent = ThemeListFrame,
         })
         Themed(tBtn, "TextColor3", "Text")
@@ -378,6 +381,7 @@ function Spectrum:AddWindow(config)
         TextSize = 13,
         TextColor3 = Theme.Text,
         AutoButtonColor = false,
+        ZIndex = 12,
         Parent = TopBar,
     })
     Themed(CloseButton, "BackgroundColor3", "Tertiary")
@@ -395,6 +399,7 @@ function Spectrum:AddWindow(config)
         TextSize = 15,
         TextColor3 = Theme.Text,
         AutoButtonColor = false,
+        ZIndex = 12,
         Parent = TopBar,
     })
     Themed(MinimizeButton, "BackgroundColor3", "Tertiary")
@@ -679,7 +684,7 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- TAB YÖNETİMİ & TOP, LEFT, RIGHT, BOTTOM DÜZENİ
+    -- TAB YÖNETİMİ & DÜZENİ
     --=====================================================================
     function Window:AddTab(tabName)
         tabName = tabName or "Tab"
@@ -732,7 +737,7 @@ function Spectrum:AddWindow(config)
         })
         Pad(Page, 0, 0, 6, 10)
 
-        -- Top Container (Sol + Sağ üstünü komple kaplar)
+        -- Top Container
         local TopContainer = Create("Frame", {
             Name = "TopContainer",
             Size = UDim2.new(1, 0, 0, 0),
@@ -743,7 +748,7 @@ function Spectrum:AddWindow(config)
         })
         Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = TopContainer })
 
-        -- Middle Columns Frame (Left & Right)
+        -- Middle Columns Frame
         local ColumnsContainer = Create("Frame", {
             Name = "ColumnsContainer",
             Size = UDim2.new(1, 0, 0, 0),
@@ -773,7 +778,7 @@ function Spectrum:AddWindow(config)
         })
         Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = RightColumn })
 
-        -- Bottom Container (Sol + Sağ altını komple kaplar)
+        -- Bottom Container
         local BottomContainer = Create("Frame", {
             Name = "BottomContainer",
             Size = UDim2.new(1, 0, 0, 0),
@@ -809,7 +814,7 @@ function Spectrum:AddWindow(config)
 
         function Tab:AddSection(sectionName, alignment)
             sectionName = sectionName or "Section"
-            alignment = alignment or "Left"  -- "Top", "Left", "Right", "Bottom"
+            alignment = alignment or "Left"
 
             local Section = {}
             local parentContainer = LeftColumn
@@ -1133,6 +1138,57 @@ function Spectrum:AddWindow(config)
                 return API
             end
 
+            -- DÜZELTİLEN ADDTEXTBOX FONKSİYONU
+            function Section:AddTextbox(cfg)
+                cfg = cfg or {}
+                local Name = cfg.Name or "Textbox"
+                local Default = cfg.Default or ""
+                local Placeholder = cfg.Placeholder or "Metin giriniz..."
+                local Callback = cfg.Callback or function() end
+                local Notifications = cfg.Notifications
+
+                local Frame = BaseElement(36)
+                NameLabel(Frame, Name)
+
+                local BoxContainer = Create("Frame", {
+                    Size = UDim2.new(1, -(CONTROL_X + CONTROL_RIGHT_PAD), 0, 24),
+                    Position = UDim2.new(0, CONTROL_X, 0.5, -12),
+                    BackgroundColor3 = Theme.Secondary,
+                    BorderSizePixel = 0,
+                    Parent = Frame,
+                })
+                Themed(BoxContainer, "BackgroundColor3", "Secondary")
+                Themed(Stroke(BoxContainer, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                local TextInput = Create("TextBox", {
+                    Size = UDim2.new(1, -12, 1, 0),
+                    Position = UDim2.new(0, 6, 0, 0),
+                    BackgroundTransparency = 1,
+                    Font = Enum.Font.Gotham,
+                    Text = Default,
+                    PlaceholderText = Placeholder,
+                    PlaceholderColor3 = Theme.SubText,
+                    TextColor3 = Theme.Text,
+                    TextSize = 11,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    ClearTextOnFocus = false,
+                    Parent = BoxContainer,
+                })
+                Themed(TextInput, "TextColor3", "Text")
+                Themed(TextInput, "PlaceholderColor3", "SubText")
+
+                TextInput.FocusLost:Connect(function(enterPressed)
+                    PlaySound(Sounds.Click, 0.25)
+                    DoNotify(Notifications, "Metin Girildi", Name .. " -> " .. TextInput.Text)
+                    task.spawn(Callback, TextInput.Text, enterPressed)
+                end)
+
+                local API = { Instance = Frame }
+                function API:Set(val) TextInput.Text = tostring(val) task.spawn(Callback, TextInput.Text, false) end
+                function API:Get() return TextInput.Text end
+                return API
+            end
+
             function Section:AddDropdown(cfg)
                 cfg = cfg or {}
                 local Name = cfg.Name or "Dropdown"
@@ -1230,12 +1286,12 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- YENİLENMİŞ ADVANCED DASHBOARD TAB
+    -- YENİLENMİŞ DASHBOARD TAB (Profil Fotolu & Tuşlar Sağda)
     --=====================================================================
     if ShowControlPanel then
         local DashTab = Window:AddTab("Dashboard")
 
-        -- SOL SÜTUN (Sistem + Karakter)
+        -- SOL SÜTUN
         local LeftSec = DashTab:AddSection("Profil & Sistem", "Left")
         
         local ProfileFrame = Create("Frame", {
@@ -1315,7 +1371,7 @@ function Spectrum:AddWindow(config)
             end
         end)
 
-        -- SAĞ SÜTUN (Karakter Durumu & Envanter)
+        -- SAĞ SÜTUN
         local RightSec = DashTab:AddSection("Karakter Durumu", "Right")
         local PosLbl = RightSec:AddButton({ Name = "CFrame: 0, 0, 0" })
         local VelLbl = RightSec:AddButton({ Name = "Velocity: 0, 0, 0" })
@@ -1351,12 +1407,12 @@ function Spectrum:AddWindow(config)
             while task.wait(2) do RefreshTools() end
         end)
 
-        -- ALT SÜTUN (Gelişmiş Oyuncu Listesi, Teleport & Spectate)
+        -- ALT SÜTUN (Profil Fotolu & Tuşlar Sağda Oyuncu Listesi)
         local PlayerSec = DashTab:AddSection("Oyuncu Listesi & Yönetim", "Bottom")
         
         local PlayerListContainer = Create("Frame", {
             Name = "PlayerListContainer",
-            Size = UDim2.new(1, 0, 0, 180),
+            Size = UDim2.new(1, 0, 0, 200),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.2,
             BorderSizePixel = 0,
@@ -1387,7 +1443,7 @@ function Spectrum:AddWindow(config)
             for _, targetPlayer in ipairs(Players:GetPlayers()) do
                 if targetPlayer ~= LocalPlayer then
                     local Row = Create("Frame", {
-                        Size = UDim2.new(1, 0, 0, 32),
+                        Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = Theme.Secondary,
                         BackgroundTransparency = 0.2,
                         BorderSizePixel = 0,
@@ -1396,34 +1452,42 @@ function Spectrum:AddWindow(config)
                     Themed(Row, "BackgroundColor3", "Secondary")
                     Themed(Stroke(Row, Theme.Stroke, 1, 0.4), "Color", "Stroke")
 
-                    -- Sol Taraf: Teleport Butonu & Spectate Toggle
-                    local TeleportBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 60, 0, 22),
-                        Position = UDim2.new(0, 6, 0.5, -11),
-                        BackgroundColor3 = Theme.Accent,
-                        BackgroundTransparency = 0.1,
-                        Text = "Işınlan",
-                        Font = Enum.Font.GothamBold,
-                        TextSize = 10,
-                        TextColor3 = Color3.new(1, 1, 1),
-                        AutoButtonColor = false,
+                    -- Sol Taraf: Profil Fotoğrafı
+                    local PImg = Create("ImageLabel", {
+                        Size = UDim2.new(0, 28, 0, 28),
+                        Position = UDim2.new(0, 4, 0.5, -14),
+                        BackgroundColor3 = Theme.Tertiary,
+                        BackgroundTransparency = 0.5,
+                        Image = "rbxassetid://0",
                         Parent = Row,
                     })
-                    Themed(TeleportBtn, "BackgroundColor3", "Accent")
+                    Themed(PImg, "BackgroundColor3", "Tertiary")
+                    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = PImg })
 
-                    TeleportBtn.MouseButton1Click:Connect(function()
-                        ClickBounce(TeleportBtn)
-                        PlaySound(Sounds.Click, 0.3)
-                        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                            Window:Notify({ Title = "Işınlanma", Content = targetPlayer.Name .. " adlı oyuncuya ışınlanıldı.", Duration = 2 })
-                        end
+                    task.spawn(function()
+                        local pThumb = Players:GetUserThumbnailAsync(targetPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+                        if PImg and PImg.Parent then PImg.Image = pThumb end
                     end)
 
+                    -- Orta Taraf: Oyuncu İsmi
+                    Themed(Create("TextLabel", {
+                        Size = UDim2.new(1, -160, 1, 0),
+                        Position = UDim2.new(0, 38, 0, 0),
+                        BackgroundTransparency = 1,
+                        Font = Enum.Font.GothamMedium,
+                        Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")",
+                        TextColor3 = Theme.Text,
+                        TextSize = 11,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        Parent = Row,
+                    }), "TextColor3", "Text")
+
+                    -- Sağ Taraf: Tuşlar (Işınlan & İzle)
                     local isSpectating = (activeSpectateTarget == targetPlayer)
                     local SpectateBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 50, 0, 22),
-                        Position = UDim2.new(0, 72, 0.5, -11),
+                        Size = UDim2.new(0, 52, 0, 22),
+                        Position = UDim2.new(1, -58, 0.5, -11),
                         BackgroundColor3 = isSpectating and Theme.Accent or Theme.Tertiary,
                         BackgroundTransparency = 0.1,
                         Text = isSpectating and "İzleniyor" or "İzle",
@@ -1455,19 +1519,28 @@ function Spectrum:AddWindow(config)
                         UpdatePlayerList()
                     end)
 
-                    -- Oyuncu İsmi
-                    Themed(Create("TextLabel", {
-                        Size = UDim2.new(1, -135, 1, 0),
-                        Position = UDim2.new(0, 128, 0, 0),
-                        BackgroundTransparency = 1,
-                        Font = Enum.Font.GothamMedium,
-                        Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")",
-                        TextColor3 = Theme.Text,
-                        TextSize = 11,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextTruncate = Enum.TextTruncate.AtEnd,
+                    local TeleportBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 52, 0, 22),
+                        Position = UDim2.new(1, -116, 0.5, -11),
+                        BackgroundColor3 = Theme.Accent,
+                        BackgroundTransparency = 0.1,
+                        Text = "Işınlan",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 10,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        AutoButtonColor = false,
                         Parent = Row,
-                    }), "TextColor3", "Text")
+                    })
+                    Themed(TeleportBtn, "BackgroundColor3", "Accent")
+
+                    TeleportBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(TeleportBtn)
+                        PlaySound(Sounds.Click, 0.3)
+                        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                            Window:Notify({ Title = "Işınlanma", Content = targetPlayer.Name .. " adlı oyuncuya ışınlanıldı.", Duration = 2 })
+                        end
+                    end)
                 end
             end
         end
