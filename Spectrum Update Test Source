@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.9.0 (Bugfixes & Enhanced Dashboard)
+    SPECTRUM UI LIBRARY  |  v3.9.1 (Custom Textbox & Top-Right Themes)
     ============================================================
 ]]
 
@@ -279,7 +279,7 @@ function Spectrum:AddWindow(config)
 
     Themed(Create("TextLabel", {
         Name = "Title",
-        Size = UDim2.new(1, -220, 1, 0),
+        Size = UDim2.new(0, 200, 1, 0),
         Position = UDim2.new(0, 14, 0, 0),
         BackgroundTransparency = 1,
         Font = Enum.Font.GothamBold,
@@ -291,82 +291,56 @@ function Spectrum:AddWindow(config)
         Parent = TopBar,
     }), "TextColor3", "Text")
 
-    -- THEME DROPDOWN (ZIndex yüksek tutuldu ki Tab/Section üstünde kalsın)
-    local ThemeDropdownBtn = Create("TextButton", {
-        Name = "ThemeDropdownBtn",
-        Size = UDim2.new(0, 90, 0, 24),
-        Position = UDim2.new(1, -165, 0.5, -12),
-        BackgroundColor3 = Theme.Tertiary,
-        BackgroundTransparency = 0.2,
-        Text = ThemeName .. " ▼",
-        Font = Enum.Font.GothamMedium,
-        TextSize = 11,
-        TextColor3 = Theme.SubText,
-        AutoButtonColor = false,
+    -- SAĞ ÜST SABİT TEMA LİSTESİ (Top-Right Theme Selector Bar)
+    local ThemeListHolder = Create("Frame", {
+        Name = "ThemeListHolder",
+        Size = UDim2.new(0, 320, 0, 24),
+        Position = UDim2.new(1, -390, 0.5, -12),
+        BackgroundTransparency = 1,
         ZIndex = 12,
         Parent = TopBar,
     })
-    Themed(ThemeDropdownBtn, "BackgroundColor3", "Tertiary")
-    Themed(ThemeDropdownBtn, "TextColor3", "SubText")
-    Themed(Stroke(ThemeDropdownBtn, Theme.Stroke, 1, 0.4), "Color", "Stroke")
 
-    local ThemeListFrame = Create("Frame", {
-        Name = "ThemeListFrame",
-        Size = UDim2.new(0, 90, 0, 0),
-        Position = UDim2.new(1, -165, 0, 38),
-        BackgroundColor3 = Theme.Secondary,
-        BackgroundTransparency = 0.05,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-        Visible = false,
-        ZIndex = 100, -- En üste çıkarıldı
-        Parent = Main,
+    local ThemeLayout = Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Right,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Padding = UDim.new(0, 4),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = ThemeListHolder,
     })
-    Themed(ThemeListFrame, "BackgroundColor3", "Secondary")
-    Themed(Stroke(ThemeListFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-    local ThemeListLayout = Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = ThemeListFrame })
-    Pad(ThemeListFrame, 2, 2, 2, 2)
-
-    local isThemeOpen = false
-    local function ToggleThemeDropdown()
-        isThemeOpen = not isThemeOpen
-        if isThemeOpen then
-            ThemeListFrame.Visible = true
-            local targetHeight = (#ThemeListLayout:GetChildren() - 1) * 22 + 6
-            Tween(ThemeListFrame, { Size = UDim2.new(0, 90, 0, targetHeight) }, 0.2, Enum.EasingStyle.Quart)
-        else
-            local tw = Tween(ThemeListFrame, { Size = UDim2.new(0, 90, 0, 0) }, 0.15, Enum.EasingStyle.Quart)
-            tw.Completed:Connect(function() if not isThemeOpen then ThemeListFrame.Visible = false end end)
-        end
-    end
-
-    ThemeDropdownBtn.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click, 0.25)
-        ToggleThemeDropdown()
-    end)
-
+    local themeButtons = {}
     for tName, _ in pairs(Themes) do
         local tBtn = Create("TextButton", {
-            Size = UDim2.new(1, 0, 0, 20),
-            BackgroundColor3 = Theme.Tertiary,
-            BackgroundTransparency = 1,
+            Name = "ThemeBtn_" .. tName,
+            Size = UDim2.new(0, 42, 1, 0),
+            BackgroundColor3 = (tName == ThemeName) and Theme.Accent or Theme.Tertiary,
+            BackgroundTransparency = 0.2,
             Text = tName,
-            Font = Enum.Font.Gotham,
+            Font = Enum.Font.GothamMedium,
             TextSize = 10,
-            TextColor3 = Theme.Text,
+            TextColor3 = (tName == ThemeName) and Color3.new(1, 1, 1) or Theme.SubText,
             AutoButtonColor = false,
-            ZIndex = 101,
-            Parent = ThemeListFrame,
+            ZIndex = 13,
+            Parent = ThemeListHolder,
         })
-        Themed(tBtn, "TextColor3", "Text")
-        tBtn.MouseEnter:Connect(function() Tween(tBtn, { BackgroundTransparency = 0.5 }, 0.1) end)
-        tBtn.MouseLeave:Connect(function() Tween(tBtn, { BackgroundTransparency = 1 }, 0.1) end)
+        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = tBtn })
+        Themed(Stroke(tBtn, Theme.Stroke, 1, 0.5), "Color", "Stroke")
+        themeButtons[tName] = tBtn
+
         tBtn.MouseButton1Click:Connect(function()
             PlaySound(Sounds.Click, 0.25)
             Window:SetTheme(tName)
-            ThemeDropdownBtn.Text = tName .. " ▼"
-            ToggleThemeDropdown()
+            for name, btn in pairs(themeButtons) do
+                if name == tName then
+                    Tween(btn, { BackgroundColor3 = Window.CurrentThemeData.Accent }, 0.15)
+                    btn.TextColor3 = Color3.new(1, 1, 1)
+                else
+                    Tween(btn, { BackgroundColor3 = Window.CurrentThemeData.Tertiary }, 0.15)
+                    btn.TextColor3 = Window.CurrentThemeData.SubText
+                end
+            end
         end)
     end
 
@@ -589,11 +563,14 @@ function Spectrum:AddWindow(config)
 
     function Window:SetToggleKeybind(keyCode) Window.ToggleKeybind = keyCode end
 
+    Window.CurrentThemeData = Theme
+
     function Window:SetTheme(newThemeName)
         local t = Themes[newThemeName]
         if not t then return end
         Theme = t
         Window.Theme = newThemeName
+        Window.CurrentThemeData = t
 
         for _, entry in ipairs(ThemeRegistry) do
             if entry.Instance and entry.Instance.Parent then entry.Instance[entry.Property] = t[entry.Key] end
@@ -1138,12 +1115,12 @@ function Spectrum:AddWindow(config)
                 return API
             end
 
-            -- DÜZELTİLEN ADDTEXTBOX FONKSİYONU
+            -- YENİ GÜNCELLENMİŞ ADDTEXTBOX (İstenen Obje Yapısına Uygundur)
             function Section:AddTextbox(cfg)
                 cfg = cfg or {}
                 local Name = cfg.Name or "Textbox"
                 local Default = cfg.Default or ""
-                local Placeholder = cfg.Placeholder or "Metin giriniz..."
+                local PlaceholderText = cfg.PlaceholderText or cfg.Placeholder or "Type here..."
                 local Callback = cfg.Callback or function() end
                 local Notifications = cfg.Notifications
 
@@ -1166,7 +1143,7 @@ function Spectrum:AddWindow(config)
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Gotham,
                     Text = Default,
-                    PlaceholderText = Placeholder,
+                    PlaceholderText = PlaceholderText,
                     PlaceholderColor3 = Theme.SubText,
                     TextColor3 = Theme.Text,
                     TextSize = 11,
@@ -1177,15 +1154,29 @@ function Spectrum:AddWindow(config)
                 Themed(TextInput, "TextColor3", "Text")
                 Themed(TextInput, "PlaceholderColor3", "SubText")
 
+                -- Metin her değiştiğinde anlık tetikleme
+                TextInput:GetPropertyChangedSignal("Text"):Connect(function()
+                    task.spawn(Callback, TextInput.Text)
+                end)
+
+                -- Odak kaybedildiğinde bildirim tetikleme
                 TextInput.FocusLost:Connect(function(enterPressed)
                     PlaySound(Sounds.Click, 0.25)
                     DoNotify(Notifications, "Metin Girildi", Name .. " -> " .. TextInput.Text)
-                    task.spawn(Callback, TextInput.Text, enterPressed)
                 end)
 
+                -- Varsayılan değer başlangıçta varsa çalıştır
+                if Default ~= "" then
+                    task.spawn(Callback, Default)
+                end
+
                 local API = { Instance = Frame }
-                function API:Set(val) TextInput.Text = tostring(val) task.spawn(Callback, TextInput.Text, false) end
-                function API:Get() return TextInput.Text end
+                function API:Set(val)
+                    TextInput.Text = tostring(val)
+                end
+                function API:Get()
+                    return TextInput.Text
+                end
                 return API
             end
 
@@ -1286,7 +1277,7 @@ function Spectrum:AddWindow(config)
     end
 
     --=====================================================================
-    -- YENİLENMİŞ DASHBOARD TAB (Profil Fotolu & Tuşlar Sağda)
+    -- DASHBOARD TAB
     --=====================================================================
     if ShowControlPanel then
         local DashTab = Window:AddTab("Dashboard")
@@ -1407,7 +1398,7 @@ function Spectrum:AddWindow(config)
             while task.wait(2) do RefreshTools() end
         end)
 
-        -- ALT SÜTUN (Profil Fotolu & Tuşlar Sağda Oyuncu Listesi)
+        -- ALT SÜTUN
         local PlayerSec = DashTab:AddSection("Oyuncu Listesi & Yönetim", "Bottom")
         
         local PlayerListContainer = Create("Frame", {
@@ -1452,7 +1443,6 @@ function Spectrum:AddWindow(config)
                     Themed(Row, "BackgroundColor3", "Secondary")
                     Themed(Stroke(Row, Theme.Stroke, 1, 0.4), "Color", "Stroke")
 
-                    -- Sol Taraf: Profil Fotoğrafı
                     local PImg = Create("ImageLabel", {
                         Size = UDim2.new(0, 28, 0, 28),
                         Position = UDim2.new(0, 4, 0.5, -14),
@@ -1469,7 +1459,6 @@ function Spectrum:AddWindow(config)
                         if PImg and PImg.Parent then PImg.Image = pThumb end
                     end)
 
-                    -- Orta Taraf: Oyuncu İsmi
                     Themed(Create("TextLabel", {
                         Size = UDim2.new(1, -160, 1, 0),
                         Position = UDim2.new(0, 38, 0, 0),
@@ -1483,7 +1472,6 @@ function Spectrum:AddWindow(config)
                         Parent = Row,
                     }), "TextColor3", "Text")
 
-                    -- Sağ Taraf: Tuşlar (Işınlan & İzle)
                     local isSpectating = (activeSpectateTarget == targetPlayer)
                     local SpectateBtn = Create("TextButton", {
                         Size = UDim2.new(0, 52, 0, 22),
