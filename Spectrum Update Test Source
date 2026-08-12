@@ -1,13 +1,7 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.8.0 (Advanced Layout & Dashboard Edition)
+    SPECTRUM UI LIBRARY  |  v3.8.0 (Custom Layout & Dashboard Edition)
     ============================================================
-
-    Kullanım:
-    local Tab = Window:AddTab("Tab İsmi")
-    local LeftSec = Tab:AddSection("Sol Bölüm", "Left")
-    local RightSec = Tab:AddSection("Sağ Bölüm", "Right")
-    local BottomSec = Tab:AddSection("Alt Alt Bölüm", "Bottom")
 ]]
 
 local TweenService      = game:GetService("TweenService")
@@ -115,7 +109,7 @@ local Themes = {
 }
 
 --=====================================================================
--- SES EFEKTLERİ
+-- SES EFEKTLERİ & YARDIMCI FONKSİYONLAR
 --=====================================================================
 local Sounds = {
     Click   = "rbxassetid://876939830",
@@ -137,17 +131,10 @@ local function PlaySound(id, volume)
     end)
 end
 
---=====================================================================
--- YARDIMCI FONKSİYONLAR
---=====================================================================
 local function Create(class, props, children)
     local inst = Instance.new(class)
-    for k, v in pairs(props or {}) do
-        inst[k] = v
-    end
-    for _, c in ipairs(children or {}) do
-        c.Parent = inst
-    end
+    for k, v in pairs(props or {}) do inst[k] = v end
+    for _, c in ipairs(children or {}) do c.Parent = inst end
     return inst
 end
 
@@ -175,9 +162,7 @@ local function ClickBounce(obj)
     local orig = obj.Size
     Tween(obj, { Size = orig - UDim2.new(0, 4, 0, 2) }, 0.07)
     task.delay(0.07, function()
-        if obj and obj.Parent then
-            Tween(obj, { Size = orig }, 0.14, Enum.EasingStyle.Back)
-        end
+        if obj and obj.Parent then Tween(obj, { Size = orig }, 0.14, Enum.EasingStyle.Back) end
     end)
 end
 
@@ -189,9 +174,7 @@ local function MakeDraggable(frame, handle)
             dragStart = input.Position
             startPos = frame.Position
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
@@ -237,7 +220,7 @@ function Spectrum:AddWindow(config)
     Window.Tabs = {}
     Window.ToggleKeybind = ToggleKeybind
     Window.GlobalNotifications = GlobalNotifications
-    Window.Open = false
+    Window.Open = true -- Başlangıçta gözükür
     Window.Minimized = false
     Window.Authenticated = not KeySystemCfg.Enabled
 
@@ -259,9 +242,7 @@ function Spectrum:AddWindow(config)
     })
     Window.ScreenGui = ScreenGui
 
-    if syn and syn.protect_gui then
-        syn.protect_gui(ScreenGui)
-    end
+    if syn and syn.protect_gui then syn.protect_gui(ScreenGui) end
 
     local Main = Create("Frame", {
         Name = "Main",
@@ -270,7 +251,7 @@ function Spectrum:AddWindow(config)
         BackgroundColor3 = Theme.Background,
         BackgroundTransparency = 0.32,
         BorderSizePixel = 0,
-        Visible = false,
+        Visible = true, -- Ekranda doğrudan görünür
         Parent = ScreenGui,
     })
     Themed(Main, "BackgroundColor3", "Background")
@@ -308,7 +289,7 @@ function Spectrum:AddWindow(config)
         Parent = TopBar,
     }), "TextColor3", "Text")
 
-    -- ANIMATED THEME DROPDOWN IN TOPBAR
+    -- THEME DROPDOWN
     local ThemeDropdownBtn = Create("TextButton", {
         Name = "ThemeDropdownBtn",
         Size = UDim2.new(0, 90, 0, 24),
@@ -341,10 +322,7 @@ function Spectrum:AddWindow(config)
     Themed(ThemeListFrame, "BackgroundColor3", "Secondary")
     Themed(Stroke(ThemeListFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-    local ThemeListLayout = Create("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = ThemeListFrame,
-    })
+    local ThemeListLayout = Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = ThemeListFrame })
     Pad(ThemeListFrame, 2, 2, 2, 2)
 
     local isThemeOpen = false
@@ -356,9 +334,7 @@ function Spectrum:AddWindow(config)
             Tween(ThemeListFrame, { Size = UDim2.new(0, 90, 0, targetHeight) }, 0.2, Enum.EasingStyle.Quart)
         else
             local tw = Tween(ThemeListFrame, { Size = UDim2.new(0, 90, 0, 0) }, 0.15, Enum.EasingStyle.Quart)
-            tw.Completed:Connect(function()
-                if not isThemeOpen then ThemeListFrame.Visible = false end
-            end)
+            tw.Completed:Connect(function() if not isThemeOpen then ThemeListFrame.Visible = false end end)
         end
     end
 
@@ -443,11 +419,7 @@ function Spectrum:AddWindow(config)
     })
     Themed(TabList, "BackgroundColor3", "Secondary")
     Themed(Stroke(TabList, Theme.Stroke, 1, 0.45), "Color", "Stroke")
-    Create("UIListLayout", {
-        Padding = UDim.new(0, 4),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = TabList,
-    })
+    Create("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = TabList })
     Pad(TabList, 6, 6, 6, 6)
 
     local ContentArea = Create("Frame", {
@@ -468,7 +440,6 @@ function Spectrum:AddWindow(config)
     })
 
     local OpenCatchers = {}
-
     local function ClosePopup(panel)
         panel.Visible = false
         if OpenCatchers[panel] then
@@ -483,9 +454,7 @@ function Spectrum:AddWindow(config)
         local mainPos = Main.AbsolutePosition
         local width = fixedWidth or absSize.X
         local relX = absPos.X - mainPos.X
-        if align == "right" then
-            relX = (relX + absSize.X) - width
-        end
+        if align == "right" then relX = (relX + absSize.X) - width end
         panel.Position = UDim2.new(0, relX, 0, (absPos.Y - mainPos.Y) + absSize.Y + (gapY or 4))
         panel.Size = UDim2.new(0, width, panel.Size.Y.Scale, panel.Size.Y.Offset)
         panel.Visible = true
@@ -505,23 +474,8 @@ function Spectrum:AddWindow(config)
             Parent = Overlay,
         })
         OpenCatchers[panel] = Catcher
-        Catcher.MouseButton1Click:Connect(function()
-            ClosePopup(panel)
-        end)
+        Catcher.MouseButton1Click:Connect(function() ClosePopup(panel) end)
     end
-
-    Themed(Create("TextLabel", {
-        Size = UDim2.new(0, 100, 0, 14),
-        Position = UDim2.new(1, -108, 1, -16),
-        BackgroundTransparency = 1,
-        Font = Enum.Font.Gotham,
-        Text = "Spectrum v3.8.0",
-        TextColor3 = Theme.SubText,
-        TextTransparency = 0.4,
-        TextSize = 9,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        Parent = Main,
-    }), "TextColor3", "SubText")
 
     local NotifyHolder = Create("Frame", {
         Name = "NotifyHolder",
@@ -563,7 +517,6 @@ function Spectrum:AddWindow(config)
     })
     Themed(InnerDot, "BackgroundColor3", "Accent")
     Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = InnerDot })
-
     MakeDraggable(ToggleButton, ToggleButton)
 
     function Window:Show()
@@ -580,16 +533,12 @@ function Spectrum:AddWindow(config)
         Window.Open = false
         local currentSize = Main.Size
         local tw = Tween(Main, { Size = UDim2.new(currentSize.X.Scale, currentSize.X.Offset * 0.9, currentSize.Y.Scale, currentSize.Y.Offset * 0.9) }, 0.15)
-        tw.Completed:Connect(function()
-            if not Window.Open then Main.Visible = false end
-        end)
+        tw.Completed:Connect(function() if not Window.Open then Main.Visible = false end end)
     end
 
     function Window:Destroy()
         Window.Open = false
-        if ScreenGui and ScreenGui.Parent then
-            ScreenGui:Destroy()
-        end
+        if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
     end
 
     function Window:Toggle()
@@ -630,14 +579,10 @@ function Spectrum:AddWindow(config)
 
     UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
-        if input.KeyCode == Window.ToggleKeybind then
-            Window:Toggle()
-        end
+        if input.KeyCode == Window.ToggleKeybind then Window:Toggle() end
     end)
 
-    function Window:SetToggleKeybind(keyCode)
-        Window.ToggleKeybind = keyCode
-    end
+    function Window:SetToggleKeybind(keyCode) Window.ToggleKeybind = keyCode end
 
     function Window:SetTheme(newThemeName)
         local t = Themes[newThemeName]
@@ -646,13 +591,9 @@ function Spectrum:AddWindow(config)
         Window.Theme = newThemeName
 
         for _, entry in ipairs(ThemeRegistry) do
-            if entry.Instance and entry.Instance.Parent then
-                entry.Instance[entry.Property] = t[entry.Key]
-            end
+            if entry.Instance and entry.Instance.Parent then entry.Instance[entry.Property] = t[entry.Key] end
         end
-        for _, cb in ipairs(ThemeCallbacks) do
-            pcall(cb, t)
-        end
+        for _, cb in ipairs(ThemeCallbacks) do pcall(cb, t) end
         for _, tb in ipairs(Window.Tabs) do
             if tb.Page.Visible then
                 tb.Button.BackgroundColor3 = t.Accent
@@ -691,26 +632,12 @@ function Spectrum:AddWindow(config)
             Parent = SlideContainer,
         })
         Themed(NotifFrame, "BackgroundColor3", "Secondary")
-        local NotifStroke = Stroke(NotifFrame, Theme.Accent, 1, 0.35)
-        Themed(NotifStroke, "Color", "Accent")
+        Themed(Stroke(NotifFrame, Theme.Accent, 1, 0.35), "Color", "Accent")
         Pad(NotifFrame, 12, 10, 12, 10)
 
-        local NotifLine = Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 2),
-            BackgroundColor3 = Theme.Accent,
-            BackgroundTransparency = 0.1,
-            BorderSizePixel = 0,
-            Parent = NotifFrame,
-        })
-        Themed(NotifLine, "BackgroundColor3", "Accent")
+        Create("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder, Parent = NotifFrame })
 
-        Create("UIListLayout", {
-            Padding = UDim.new(0, 2),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = NotifFrame,
-        })
-
-        local NotifTitle = Create("TextLabel", {
+        Themed(Create("TextLabel", {
             Size = UDim2.new(1, 0, 0, 16),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
@@ -719,10 +646,9 @@ function Spectrum:AddWindow(config)
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = NotifFrame,
-        })
-        Themed(NotifTitle, "TextColor3", "Text")
+        }), "TextColor3", "Text")
 
-        local NotifContent = Create("TextLabel", {
+        Themed(Create("TextLabel", {
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
@@ -733,8 +659,7 @@ function Spectrum:AddWindow(config)
             TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = NotifFrame,
-        })
-        Themed(NotifContent, "TextColor3", "SubText")
+        }), "TextColor3", "SubText")
 
         PlaySound(Sounds.Notify, 0.35)
         Tween(NotifFrame, { Position = UDim2.new(0, 0, 0, 0) }, 0.35, Enum.EasingStyle.Back)
@@ -742,9 +667,7 @@ function Spectrum:AddWindow(config)
         task.delay(Duration, function()
             if NotifFrame and NotifFrame.Parent then
                 local tw = Tween(NotifFrame, { Position = UDim2.new(1.4, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quart)
-                tw.Completed:Connect(function()
-                    if SlideContainer and SlideContainer.Parent then SlideContainer:Destroy() end
-                end)
+                tw.Completed:Connect(function() if SlideContainer and SlideContainer.Parent then SlideContainer:Destroy() end end)
             end
         end)
     end
@@ -752,13 +675,11 @@ function Spectrum:AddWindow(config)
     local function DoNotify(elementNotifSetting, title, content)
         local shouldNotify = elementNotifSetting
         if shouldNotify == nil then shouldNotify = true end
-        if shouldNotify and Window.GlobalNotifications then
-            Window:Notify({ Title = title, Content = content, Duration = 2.5 })
-        end
+        if shouldNotify and Window.GlobalNotifications then Window:Notify({ Title = title, Content = content, Duration = 2.5 }) end
     end
 
     --=====================================================================
-    -- TAB YÖNETİMİ & HER ZAMAN DUAL-COLUMN LAYOUT
+    -- TAB YÖNETİMİ & TOP, LEFT, RIGHT, BOTTOM DÜZENİ
     --=====================================================================
     function Window:AddTab(tabName)
         tabName = tabName or "Tab"
@@ -811,13 +732,24 @@ function Spectrum:AddWindow(config)
         })
         Pad(Page, 0, 0, 6, 10)
 
-        -- Top Columns Frame (Left & Right Column)
+        -- Top Container (Sol + Sağ üstünü komple kaplar)
+        local TopContainer = Create("Frame", {
+            Name = "TopContainer",
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            LayoutOrder = 1,
+            Parent = Page,
+        })
+        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = TopContainer })
+
+        -- Middle Columns Frame (Left & Right)
         local ColumnsContainer = Create("Frame", {
             Name = "ColumnsContainer",
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            LayoutOrder = 1,
+            LayoutOrder = 2,
             Parent = Page,
         })
 
@@ -829,11 +761,7 @@ function Spectrum:AddWindow(config)
             BackgroundTransparency = 1,
             Parent = ColumnsContainer,
         })
-        Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = LeftColumn,
-        })
+        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = LeftColumn })
 
         local RightColumn = Create("Frame", {
             Name = "RightColumn",
@@ -841,29 +769,20 @@ function Spectrum:AddWindow(config)
             Position = UDim2.new(0.51, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            Parent = RightColumn,
             Parent = ColumnsContainer,
         })
-        Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = RightColumn,
-        })
+        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = RightColumn })
 
-        -- Bottom Section Frame
+        -- Bottom Container (Sol + Sağ altını komple kaplar)
         local BottomContainer = Create("Frame", {
             Name = "BottomContainer",
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            LayoutOrder = 2,
+            LayoutOrder = 3,
             Parent = Page,
         })
-        Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = BottomContainer,
-        })
+        Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = BottomContainer })
 
         Tab.Button = TabButton
         Tab.Label = TabLabel
@@ -890,11 +809,13 @@ function Spectrum:AddWindow(config)
 
         function Tab:AddSection(sectionName, alignment)
             sectionName = sectionName or "Section"
-            alignment = alignment or "Left"  -- "Left", "Right", or "Bottom"
+            alignment = alignment or "Left"  -- "Top", "Left", "Right", "Bottom"
 
             local Section = {}
             local parentContainer = LeftColumn
-            if alignment == "Right" then
+            if alignment == "Top" then
+                parentContainer = TopContainer
+            elseif alignment == "Right" then
                 parentContainer = RightColumn
             elseif alignment == "Bottom" then
                 parentContainer = BottomContainer
@@ -933,6 +854,7 @@ function Spectrum:AddWindow(config)
             }), "BackgroundColor3", "Accent")
 
             local ElementHolder = Create("Frame", {
+                Name = "ElementHolder",
                 Size = UDim2.new(1, -20, 0, 0),
                 Position = UDim2.new(0, 10, 0, 36),
                 AutomaticSize = Enum.AutomaticSize.Y,
@@ -947,6 +869,8 @@ function Spectrum:AddWindow(config)
                 Parent = ElementHolder,
             })
             Pad(SectionOuter, 0, 0, 0, 10)
+
+            Section.ElementHolder = ElementHolder
 
             local function BaseElement(height)
                 local Frame = Create("Frame", {
@@ -1024,13 +948,8 @@ function Spectrum:AddWindow(config)
                     task.spawn(Callback)
                 end
 
-                Btn.MouseEnter:Connect(function()
-                    Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15)
-                end)
-                Btn.MouseLeave:Connect(function()
-                    Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15)
-                end)
-
+                Btn.MouseEnter:Connect(function() Tween(Frame, { BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.55 }, 0.15) end)
+                Btn.MouseLeave:Connect(function() Tween(Frame, { BackgroundColor3 = Theme.Tertiary, BackgroundTransparency = 0.06 }, 0.15) end)
                 Btn.MouseButton1Click:Connect(TriggerButton)
 
                 local API = { Instance = Frame }
@@ -1072,8 +991,7 @@ function Spectrum:AddWindow(config)
                     BorderSizePixel = 0,
                     Parent = Frame,
                 })
-                local SwitchStroke = Stroke(SwitchBG, Theme.Stroke, 1, 0.4)
-                Themed(SwitchStroke, "Color", "Stroke")
+                Themed(Stroke(SwitchBG, Theme.Stroke, 1, 0.4), "Color", "Stroke")
 
                 local Knob = Create("Frame", {
                     Size = UDim2.new(0, 16, 0, 16),
@@ -1106,9 +1024,7 @@ function Spectrum:AddWindow(config)
                     UpdateVisual()
                     task.spawn(Callback, State)
                 end
-                function API:Get()
-                    return State
-                end
+                function API:Get() return State end
                 if Default then task.spawn(Callback, State) end
                 return API
             end
@@ -1319,16 +1235,15 @@ function Spectrum:AddWindow(config)
     if ShowControlPanel then
         local DashTab = Window:AddTab("Dashboard")
 
-        -- SOL SÜTUN (Sistem + Karakter + Envanter)
+        -- SOL SÜTUN (Sistem + Karakter)
         local LeftSec = DashTab:AddSection("Profil & Sistem", "Left")
         
-        -- Profil Kartı
         local ProfileFrame = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 65),
             BackgroundColor3 = Theme.Tertiary,
             BackgroundTransparency = 0.1,
             BorderSizePixel = 0,
-            Parent = LeftSec:AddButton({ Name = "" }).Instance.Parent, -- Section içi yerleşim
+            Parent = LeftSec.ElementHolder,
         })
         Themed(ProfileFrame, "BackgroundColor3", "Tertiary")
         Themed(Stroke(ProfileFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
@@ -1374,7 +1289,6 @@ function Spectrum:AddWindow(config)
             Parent = ProfileFrame,
         }), "TextColor3", "SubText")
 
-        -- Statlar Widget
         local StatsSec = DashTab:AddSection("Performans", "Left")
         local FpsLbl  = StatsSec:AddButton({ Name = "FPS: 60" })
         local PingLbl = StatsSec:AddButton({ Name = "Ping: 0 ms" })
@@ -1401,7 +1315,7 @@ function Spectrum:AddWindow(config)
             end
         end)
 
-        -- SAĞ SÜTUN (Karakter & Envanter)
+        -- SAĞ SÜTUN (Karakter Durumu & Envanter)
         local RightSec = DashTab:AddSection("Karakter Durumu", "Right")
         local PosLbl = RightSec:AddButton({ Name = "CFrame: 0, 0, 0" })
         local VelLbl = RightSec:AddButton({ Name = "Velocity: 0, 0, 0" })
@@ -1437,38 +1351,137 @@ function Spectrum:AddWindow(config)
             while task.wait(2) do RefreshTools() end
         end)
 
-        -- ALT SÜTUN (Oyuncu Listesi & Spectate)
-        local PlayerSec = DashTab:AddSection("Oyuncu Listesi & İzleyici", "Bottom")
-        local PlayerDropdown = PlayerSec:AddDropdown({
-            Name = "Oyuncu Seç",
-            Options = {},
-            Callback = function(selectedName)
-                local target = Players:FindFirstChild(selectedName)
-                if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                    workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
-                    Window:Notify({ Title = "Spectate", Content = selectedName .. " izleniyor.", Duration = 2 })
+        -- ALT SÜTUN (Gelişmiş Oyuncu Listesi, Teleport & Spectate)
+        local PlayerSec = DashTab:AddSection("Oyuncu Listesi & Yönetim", "Bottom")
+        
+        local PlayerListContainer = Create("Frame", {
+            Name = "PlayerListContainer",
+            Size = UDim2.new(1, 0, 0, 180),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.2,
+            BorderSizePixel = 0,
+            Parent = PlayerSec.ElementHolder,
+        })
+        Themed(PlayerListContainer, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(PlayerListContainer, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+        local PlayerScroll = Create("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 3,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Parent = PlayerListContainer,
+        })
+        Pad(PlayerScroll, 6, 6, 6, 6)
+        Create("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = PlayerScroll })
+
+        local activeSpectateTarget = nil
+
+        local function UpdatePlayerList()
+            for _, child in ipairs(PlayerScroll:GetChildren()) do
+                if child:IsA("Frame") then child:Destroy() end
+            end
+
+            for _, targetPlayer in ipairs(Players:GetPlayers()) do
+                if targetPlayer ~= LocalPlayer then
+                    local Row = Create("Frame", {
+                        Size = UDim2.new(1, 0, 0, 32),
+                        BackgroundColor3 = Theme.Secondary,
+                        BackgroundTransparency = 0.2,
+                        BorderSizePixel = 0,
+                        Parent = PlayerScroll,
+                    })
+                    Themed(Row, "BackgroundColor3", "Secondary")
+                    Themed(Stroke(Row, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+
+                    -- Sol Taraf: Teleport Butonu & Spectate Toggle
+                    local TeleportBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 60, 0, 22),
+                        Position = UDim2.new(0, 6, 0.5, -11),
+                        BackgroundColor3 = Theme.Accent,
+                        BackgroundTransparency = 0.1,
+                        Text = "Işınlan",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 10,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        AutoButtonColor = false,
+                        Parent = Row,
+                    })
+                    Themed(TeleportBtn, "BackgroundColor3", "Accent")
+
+                    TeleportBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(TeleportBtn)
+                        PlaySound(Sounds.Click, 0.3)
+                        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                            Window:Notify({ Title = "Işınlanma", Content = targetPlayer.Name .. " adlı oyuncuya ışınlanıldı.", Duration = 2 })
+                        end
+                    end)
+
+                    local isSpectating = (activeSpectateTarget == targetPlayer)
+                    local SpectateBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 50, 0, 22),
+                        Position = UDim2.new(0, 72, 0.5, -11),
+                        BackgroundColor3 = isSpectating and Theme.Accent or Theme.Tertiary,
+                        BackgroundTransparency = 0.1,
+                        Text = isSpectating and "İzleniyor" or "İzle",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 10,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = Row,
+                    })
+                    Themed(SpectateBtn, "BackgroundColor3", isSpectating and "Accent" or "Tertiary")
+                    Themed(SpectateBtn, "TextColor3", "Text")
+
+                    SpectateBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(SpectateBtn)
+                        PlaySound(Sounds.Click, 0.3)
+                        if activeSpectateTarget == targetPlayer then
+                            activeSpectateTarget = nil
+                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                                workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+                            end
+                            Window:Notify({ Title = "Spectate Kapalı", Content = "Kendi kameranıza dönüldü.", Duration = 2 })
+                        else
+                            activeSpectateTarget = targetPlayer
+                            if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+                                workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+                            end
+                            Window:Notify({ Title = "Spectate Açık", Content = targetPlayer.Name .. " izleniyor.", Duration = 2 })
+                        end
+                        UpdatePlayerList()
+                    end)
+
+                    -- Oyuncu İsmi
+                    Themed(Create("TextLabel", {
+                        Size = UDim2.new(1, -135, 1, 0),
+                        Position = UDim2.new(0, 128, 0, 0),
+                        BackgroundTransparency = 1,
+                        Font = Enum.Font.GothamMedium,
+                        Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")",
+                        TextColor3 = Theme.Text,
+                        TextSize = 11,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        Parent = Row,
+                    }), "TextColor3", "Text")
                 end
             end
-        })
+        end
 
-        PlayerSec:AddButton({
-            Name = "Kendi Kamerana Dön",
-            Callback = function()
+        Players.PlayerAdded:Connect(UpdatePlayerList)
+        Players.PlayerRemoving:Connect(function(plr)
+            if activeSpectateTarget == plr then
+                activeSpectateTarget = nil
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                     workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
                 end
             end
-        })
-
-        local function UpdatePlayerList()
-            local plist = {}
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer then table.insert(plist, p.Name) end
-            end
-            PlayerDropdown:Refresh(plist)
-        end
-        Players.PlayerAdded:Connect(UpdatePlayerList)
-        Players.PlayerRemoving:Connect(UpdatePlayerList)
+            UpdatePlayerList()
+        end)
         UpdatePlayerList()
     end
 
