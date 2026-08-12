@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.9.2 (Full Restored Edition)
+    SPECTRUM UI LIBRARY  |  v3.9.3 (Two-Column Layout Fix)
     ============================================================
 ]]
 
@@ -883,7 +883,7 @@ function Spectrum:AddWindow(config)
         })
         Themed(Page, "ScrollBarImageColor3", "Accent")
 
-        local LayoutContainer
+        local LayoutContainer, LeftColumn, RightColumn
         if twoColumnMode then
             LayoutContainer = Create("Frame", {
                 Name = "LayoutContainer",
@@ -901,6 +901,34 @@ function Spectrum:AddWindow(config)
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 Parent = LayoutContainer,
             })
+
+            LeftColumn = Create("Frame", {
+                Name = "LeftColumn",
+                Size = UDim2.new(0.49, -3, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Parent = LayoutContainer,
+            })
+            Create("UIListLayout", {
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = LeftColumn,
+            })
+
+            RightColumn = Create("Frame", {
+                Name = "RightColumn",
+                Size = UDim2.new(0.49, -3, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Parent = LayoutContainer,
+            })
+            Create("UIListLayout", {
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = RightColumn,
+            })
         end
 
         Create("UIListLayout", {
@@ -914,6 +942,8 @@ function Spectrum:AddWindow(config)
         Tab.Label = TabLabel
         Tab.Page = Page
         Tab.LayoutContainer = LayoutContainer
+        Tab.LeftColumn = LeftColumn
+        Tab.RightColumn = RightColumn
 
         local function SelectTab()
             for _, t in pairs(Window.Tabs) do
@@ -939,14 +969,27 @@ function Spectrum:AddWindow(config)
             alignment = alignment or "Single"
 
             local Section = {}
+            local parentContainer
+
+            if twoColumnMode then
+                if alignment == "Right" then
+                    parentContainer = RightColumn
+                elseif alignment == "Left" then
+                    parentContainer = LeftColumn
+                else
+                    parentContainer = Page
+                end
+            else
+                parentContainer = Page
+            end
 
             local SectionOuter = Create("Frame", {
-                Size = twoColumnMode and (alignment ~= "Single" and UDim2.new(0.48, 0, 0, 0) or UDim2.new(1, -6, 0, 0)) or UDim2.new(1, -6, 0, 0),
+                Size = UDim2.new(1, (parentContainer == Page and -6 or 0), 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = Theme.Secondary,
                 BackgroundTransparency = 0.12,
                 BorderSizePixel = 0,
-                Parent = twoColumnMode and (alignment ~= "Single" and LayoutContainer or Page) or Page,
+                Parent = parentContainer,
             })
             Themed(SectionOuter, "BackgroundColor3", "Secondary")
             Themed(Stroke(SectionOuter, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
@@ -1866,7 +1909,7 @@ function Spectrum:AddWindow(config)
             Parent = PanelFrame,
         })
 
-        -- 1. TEMA SEÇİCİ DROPDOWN (SAĞ ÜSTTEN TAŞINDI)
+        -- 1. TEMA SEÇİCİ DROPDOWN
         local ThemeSelectFrame = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 36),
             BackgroundColor3 = Theme.Tertiary,
@@ -2121,7 +2164,7 @@ function Spectrum:AddWindow(config)
             end
         end)
 
-        -- 4. PLAYER LIST & VIEW / TELEPORT (RESTORED)
+        -- 4. PLAYER LIST & VIEW / TELEPORT
         local PlayerListCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 140),
             BackgroundColor3 = Theme.Tertiary,
@@ -2256,7 +2299,7 @@ function Spectrum:AddWindow(config)
         Players.PlayerAdded:Connect(RefreshPlayerList)
         Players.PlayerRemoving:Connect(RefreshPlayerList)
 
-        -- 5. POSITION, CFRAME, VELOCITY MONİTÖRÜ (RESTORED)
+        -- 5. POSITION, CFRAME, VELOCITY MONİTÖRÜ
         local PhysicsCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 80),
             BackgroundColor3 = Theme.Tertiary,
@@ -2315,7 +2358,7 @@ function Spectrum:AddWindow(config)
             Parent = PhysicsCard,
         }), "TextColor3", "SubText")
 
-        -- 6. ENVANTER TOOL MONİTÖRÜ (RESTORED)
+        -- 6. ENVANTER TOOL MONİTÖRÜ
         local InventoryCard = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 80),
             BackgroundColor3 = Theme.Tertiary,
@@ -2428,7 +2471,6 @@ function Spectrum:AddWindow(config)
                 end)
             end
 
-            -- Pos / CFrame / Velocity Canlı Güncelleme
             pcall(function()
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     local hrp = LocalPlayer.Character.HumanoidRootPart
