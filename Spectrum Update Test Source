@@ -1911,11 +1911,11 @@ function Spectrum:AddWindow(config)
         -- SOL KOLON SEKSİYONLARI: PROFiL KARTI
         local ProfileSec = DashTab:AddSection("👤 Profil / Oyuncu Bilgileri", "Left")
 
-        local ProfileCardFrame = CreateBaseElement(ProfileSec.Instance, 65)
+        local ProfileCardFrame = CreateBaseElement(ProfileSec.Instance, 70)
         
         local AvatarImg = Create("ImageLabel", {
             Size = UDim2.new(0, 46, 0, 46),
-            Position = UDim2.new(0, 10, 0.5, -23),
+            Position = UDim2.new(0, 10, 0, 12),
             BackgroundColor3 = Theme.Secondary,
             BorderSizePixel = 0,
             Parent = ProfileCardFrame,
@@ -1930,7 +1930,7 @@ function Spectrum:AddWindow(config)
         end)
 
         Themed(Create("TextLabel", {
-            Size = UDim2.new(1, -70, 0, 20),
+            Size = UDim2.new(1, -70, 0, 18),
             Position = UDim2.new(0, 64, 0, 12),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
@@ -1943,7 +1943,7 @@ function Spectrum:AddWindow(config)
         }), "TextColor3", "Text")
 
         Themed(Create("TextLabel", {
-            Size = UDim2.new(1, -70, 0, 18),
+            Size = UDim2.new(1, -70, 0, 16),
             Position = UDim2.new(0, 64, 0, 32),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamMedium,
