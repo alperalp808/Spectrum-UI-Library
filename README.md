@@ -1,332 +1,434 @@
-# Spectrum UI Library — v3.7.0
+# Spectrum UI Library — v3.9.5
 
-**Two-Column Tab Support Edition**
-
-An English usage guide and introduction to the Spectrum UI library — a Lua-based interface framework for building draggable, themeable windows with tabs, sections, and a full set of interactive controls.
+A modern, fully-featured GUI library for Roblox, designed for clean dashboards with rich theming, animated components, and a built-in control panel.
 
 ---
 
-## ✨ Highlights
+## Table of Contents
 
-- 🆕 **Two-column tab layout** — split a tab's content into Left/Right sections
-- 🎨 **7 built-in themes** — `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light`, switchable live at runtime
-- 🔔 **Built-in notification system** with slide-in/out animations
-- 🔐 **Optional Key System** login screen (username/password gate)
-- ⌨️ **Keybind support** on buttons, toggles, and standalone keybind elements
-- 📊 **Optional Dashboard tab** showing FPS, ping, memory usage, network data, and player/place info
-- 🖱️ Draggable window and floating toggle button
-- 🎬 Smooth tweened animations throughout (open/close, hover, click bounce, popups)
+- [Quick Start](#quick-start)
+- [Window Configuration](#window-configuration)
+- [Key System (Authentication)](#key-system-authentication)
+- [Themes](#themes)
+- [Tabs & Sections](#tabs--sections)
+- [Components](#components)
+  - [Button](#button)
+  - [Toggle](#toggle)
+  - [Slider](#slider)
+  - [Dropdown](#dropdown)
+  - [Textbox](#textbox)
+  - [Colorpicker](#colorpicker)
+  - [Keybind](#keybind)
+  - [Label](#label)
+- [Notifications](#notifications)
+- [Window Methods](#window-methods)
+- [Dashboard / Control Panel](#dashboard--control-panel)
+- [Two-Column Layout](#two-column-layout)
+- [Notes & Tips](#notes--tips)
 
 ---
 
-## 📦 Installation
-
-Spectrum UI is a single Lua module that returns a library table. Load it with `loadstring`, typically from a URL, and call `AddWindow` to get started:
+## Quick Start
 
 ```lua
-local Spectrum = loadstring(game:HttpGet("<raw-source-url>"))()
+local Spectrum = loadstring(game:HttpGet("YOUR_RAW_SCRIPT_URL"))()
 
 local Window = Spectrum:AddWindow({
-    Name = "My Panel",
-    Theme = "Aqua",
+    Name            = "My Script",
+    Theme           = "Aqua",
+    ToggleKeybind   = Enum.KeyCode.RightControl,
+    Size            = UDim2.new(0, 760, 0, 540),
+    Notifications   = true,
+    ToggleButton    = true,
+    ControlPanel    = true,
+})
+
+local Tab     = Window:AddTab("Main")
+local Section = Tab:AddSection("General")
+
+Section:AddButton({
+    Name     = "Say Hello",
+    Callback = function()
+        print("Hello, World!")
+    end,
 })
 ```
 
 ---
 
-## 🪟 Creating a Window
+## Window Configuration
 
-```lua
-local Window = Spectrum:AddWindow({
-    Name = "My Panel",              -- Window title
-    Theme = "Aqua",                 -- Green | Dark | Foggy | Sun | Aqua | Crimson | Light
-    ToggleKeybind = Enum.KeyCode.RightControl,
-    Size = UDim2.new(0, 736, 0, 484),
-    Notifications = true,           -- Global notification switch
-    ControlPanel = true,            -- Adds a built-in "Dashboard" tab
-    ToggleButton = true,            -- Floating show/hide button
-    KeySystem = {
-        Enabled = false,
-        Title = "Spectrum Security",
-        Note = "Please enter your credentials.",
-        Users = { { User = "admin", Pass = "1234" } }
-    }
-})
-```
+Pass a config table to `Spectrum:AddWindow()`:
 
-### Window options
-
-| Option | Type | Default | Description |
+| Key | Type | Default | Description |
 |---|---|---|---|
-| `Name` | string | `"Spectrum"` | Text shown in the top bar |
-| `Theme` | string | `"Aqua"` | Initial theme name |
-| `ToggleKeybind` | `Enum.KeyCode` | `RightControl` | Key that shows/hides the window |
-| `Size` | `UDim2` | `0,736,0,484` | Window size |
-| `Notifications` | boolean | `true` | Master switch for `Window:Notify()` |
-| `ControlPanel` | boolean | `true` | Adds an automatic Dashboard tab |
-| `ToggleButton` | boolean | `true` | Shows a small draggable floating toggle button |
-| `KeySystem` | table | `{Enabled=false}` | Optional login gate, see below |
-
-### Window methods
-
-| Method | Description |
-|---|---|
-| `Window:Show()` | Opens the window with a spring animation |
-| `Window:Close()` | Closes (hides) the window |
-| `Window:Toggle()` | Shows if hidden, hides if shown |
-| `Window:Destroy()` | Fully removes the UI from the game |
-| `Window:SetTheme(name)` | Switches every themed element live |
-| `Window:SetToggleKeybind(keyCode)` | Changes the show/hide hotkey |
-| `Window:Notify({Title, Content, Duration})` | Fires a toast notification |
-| `Window:AddTab(name, twoColumn)` | Creates a new tab, returns a `Tab` object |
+| `Name` | string | `"Spectrum"` | Title shown in the top bar |
+| `Theme` | string | `"Aqua"` | Starting theme (see [Themes](#themes)) |
+| `ToggleKeybind` | KeyCode | `RightControl` | Keyboard shortcut to show/hide |
+| `Size` | UDim2 | `760 × 540` | Window dimensions |
+| `Notifications` | bool | `true` | Enable/disable toast notifications globally |
+| `ToggleButton` | bool | `true` | Show the floating toggle button |
+| `ControlPanel` | bool | `true` | Show the built-in Dashboard tab |
+| `KeySystem` | table | `{Enabled=false}` | Authentication config (see below) |
 
 ---
 
-## 🔐 Key System (Login Gate)
+## Key System (Authentication)
 
-When `KeySystem.Enabled = true`, a centered login card appears before the main window, requiring a matching username/password pair from the `Users` list. Only after a correct match does `Window.Authenticated` become `true` and the window auto-opens.
+Lock your script behind a username/password login screen.
 
 ```lua
-KeySystem = {
-    Enabled = true,
-    Title = "Spectrum Security",
-    Note = "Please enter your credentials.",
-    Users = {
-        { User = "admin", Pass = "1234" },
-        { User = "user",  Pass = "spectrum2026" },
-    }
-}
+local Window = Spectrum:AddWindow({
+    Name  = "My Script",
+    KeySystem = {
+        Enabled = true,
+        Title   = "LOGIN REQUIRED",
+        Note    = "Enter your credentials to continue.",
+        Users   = {
+            { User = "admin",   Pass = "secret123" },
+            { User = "player1", Pass = "mypassword" },
+        },
+    },
+})
 ```
 
-Incorrect credentials flash the password field red and clear it; correct credentials play a success sound and animate the login card away.
+When enabled, a centered login modal appears before the main window. On success the window animates open; on failure the password field flashes red.
 
 ---
 
-## 🗂️ Tabs
+## Themes
 
-```lua
-local Tab = Window:AddTab("My Tab", true)   -- two-column layout
-local Tab = Window:AddTab("My Tab", false)  -- standard single-column layout
-```
+Seven built-in themes are available. Pass the name string to `Theme` on window creation, or call `Window:SetTheme()` at any time.
 
-The second argument controls layout mode:
-
-- **`true`** → the tab's page becomes a horizontal flex container; sections created with `"Left"` or `"Right"` sit side by side, each taking roughly half the width.
-- **`false`** (or omitted) → sections stack vertically in a single column, the default behavior.
-
----
-
-## 📐 Sections
-
-Sections are card-style containers with a title, an accent underline, and an internal list of components.
-
-```lua
-local Section = Tab:AddSection("Section Name", alignment)
-```
-
-| `alignment` | Effect | Valid only when |
+| Name | Accent Color | Mood |
 |---|---|---|
-| `"Left"` | Placed in the left half | Tab created with `twoColumn = true` |
-| `"Right"` | Placed in the right half | Tab created with `twoColumn = true` |
-| `"Single"` / omitted | Full-width, stacked normally | Any tab |
+| `Aqua` | Cyan `#00CCFF` | Default — cool blue-teal |
+| `Green` | Emerald `#2ECC71` | Nature / hacker |
+| `Dark` | Light grey `#C8C8C8` | Minimal monochrome |
+| `Foggy` | Blue `#3898FF` | Soft blue-grey |
+| `Sun` | Amber `#F39C12` | Warm golden |
+| `Crimson` | Red `#C42238` | Bold red accent |
+| `Light` | Royal blue `#4169E1` | Light / bright |
+
+```lua
+-- Switch theme at runtime
+Window:SetTheme("Crimson")
+```
 
 ---
 
-## 🎛️ Components Reference
+## Tabs & Sections
 
-All components live on a `Section` object and return an **API table** you can use afterward (`:Set()`, `:Get()`, etc. where applicable).
+### Adding a Tab
 
-### AddLabel
 ```lua
-Section:AddLabel({ Text = "Some descriptive text" })
+local Tab = Window:AddTab("Combat")
 ```
-`API:Set(text)` updates the label text.
 
-### AddButton
+Tabs appear in the left sidebar. The first tab added is automatically selected.
+
+### Adding a Section
+
 ```lua
-local Btn = Section:AddButton({
-    Name = "My Button",
+local Section = Tab:AddSection("Aim Settings")
+```
+
+Sections are collapsible groups inside a tab. All components are added to sections.
+
+---
+
+## Components
+
+Every component method returns an API object with at least `:Get()` and `:Set()` methods, plus an `.Instance` reference to the underlying UI frame.
+
+### Button
+
+A clickable button that fires a callback.
+
+```lua
+Section:AddButton({
+    Name          = "Teleport to Spawn",
+    Notifications = true,       -- optional: show a toast on click
+    Callback      = function()
+        -- your code here
+    end,
+})
+```
+
+**Keybind attachment** — bind a key to trigger the button:
+
+```lua
+local Btn = Section:AddButton({ Name = "Noclip", Callback = function() end })
+Btn:AddKeybind("F")    -- press F to fire the button
+```
+
+---
+
+### Toggle
+
+An on/off switch.
+
+```lua
+local Toggle = Section:AddToggle({
+    Name          = "Silent Aim",
+    Default       = false,
     Notifications = true,
-    Callback = function() end
+    Callback      = function(state)
+        print("Toggle is now:", state)
+    end,
 })
-Btn:AddKeybind("F")  -- optional hotkey shortcut
 ```
 
-### AddToggle
+**API:**
+
 ```lua
-local Tgl = Section:AddToggle({
-    Name = "My Toggle",
-    Default = false,
-    Notifications = true,
-    Callback = function(state) end
-})
-Tgl:Set(true)
-Tgl:Get()
-Tgl:AddKeybind("G")
+Toggle:Set(true)   -- force a value
+Toggle:Get()       -- returns current boolean
+Toggle:AddKeybind("G")  -- press G to flip the toggle
 ```
 
-### AddSlider
+---
+
+### Slider
+
+A draggable numeric slider.
+
 ```lua
-local Sld = Section:AddSlider({
-    Name = "My Slider",
-    Min = 0, Max = 100,
-    Default = 50,
-    Increment = 5,
-    Callback = function(value) end
+local Slider = Section:AddSlider({
+    Name          = "Walk Speed",
+    Min           = 16,
+    Max           = 500,
+    Default       = 16,
+    Increment     = 1,
+    Notifications = false,
+    Callback      = function(value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end,
 })
-Sld:Set(80)
-Sld:Get()
 ```
 
-### AddTextbox
-```lua
-local Box = Section:AddTextbox({
-    Name = "My Textbox",
-    PlaceholderText = "Type here...",
-    Default = "",
-    Callback = function(text) end
-})
-Box:Set("hello")
-Box:Get()
-```
-Callback fires when Enter is pressed while focused.
+**API:**
 
-### AddColorpicker
 ```lua
-local Cp = Section:AddColorpicker({
-    Name = "My Color",
-    Default = Color3.fromRGB(0, 204, 255),
-    Callback = function(color) end
-})
-Cp:Set(Color3.fromRGB(255, 0, 0))
-Cp:Get()
+Slider:Set(100)   -- jump to a specific value
+Slider:Get()      -- returns current number
 ```
-Opens a floating saturation/value box plus a hue bar.
 
-### AddDropdown
+---
+
+### Dropdown
+
+A single-select or multi-select dropdown menu.
+
 ```lua
--- Single-select
-local Dd = Section:AddDropdown({
-    Name = "Mode",
-    Options = {"Attack", "Defense", "Balanced"},
-    Default = "Balanced",
-    Callback = function(selected) end
+-- Single select
+local Drop = Section:AddDropdown({
+    Name     = "Game Mode",
+    Options  = { "Normal", "Hardcore", "Creative" },
+    Default  = "Normal",
+    Callback = function(selected)
+        print("Chose:", selected)
+    end,
 })
 
 -- Multi-select
-local MultiDd = Section:AddDropdown({
-    Name = "Multi Select",
-    Options = {"A", "B", "C"},
-    Default = {"A", "C"},
-    Multi = true,
-    Callback = function(selected) end
+local MultiDrop = Section:AddDropdown({
+    Name     = "Active Cheats",
+    Options  = { "ESP", "Aimbot", "Fly", "Speed" },
+    Default  = { "ESP" },   -- pre-selected items
+    Multi    = true,
+    Callback = function(selected)
+        -- selected is a table: { ESP = true, Fly = true, ... }
+    end,
 })
-
-Dd:Set("Attack")
-Dd:Get()
-Dd:Refresh({"New1", "New2"})  -- replace the option list
 ```
 
-### AddKeybind (standalone)
+**API:**
+
 ```lua
-local Kb = Section:AddKeybind({
-    Name = "Custom Keybind",
-    Default = Enum.KeyCode.H,
-    Mode = "Toggle",  -- "Button" or "Toggle"
-    Callback = function(state) end
-})
-Kb:Set(Enum.KeyCode.J)
-Kb:Get()
+Drop:Set("Hardcore")           -- change selection
+Drop:Get()                     -- returns current value / table
+Drop:Refresh({ "A", "B" })    -- replace the options list
 ```
-In `"Toggle"` mode a small indicator dot lights up in the accent color while active.
-
-All components except `AddLabel` and `AddKeybind` accept `Notifications = true/false` to auto-fire a `Window:Notify()` toast whenever their callback runs (subject to the window's global `Notifications` setting).
 
 ---
 
-## 🎨 Theming
+### Textbox
+
+A text input field that fires on Enter.
 
 ```lua
-Window:SetTheme("Dark")
+local Box = Section:AddTextbox({
+    Name            = "Target Player",
+    PlaceholderText = "Enter username...",
+    Default         = "",
+    Notifications   = false,
+    Callback        = function(text)
+        print("Submitted:", text)
+    end,
+})
 ```
 
-Built-in themes: `Green`, `Dark`, `Foggy`, `Sun`, `Aqua`, `Crimson`, `Light`
+**API:**
 
-Every themed element (backgrounds, strokes, text, accents) updates instantly and tab button highlighting refreshes to match the active theme.
+```lua
+Box:Set("Roblox")   -- set content programmatically
+Box:Get()           -- returns current string
+```
 
 ---
 
-## 🔔 Notifications
+### Colorpicker
+
+An HSV color picker with a hue bar.
+
+```lua
+local CP = Section:AddColorpicker({
+    Name     = "ESP Color",
+    Default  = Color3.fromRGB(255, 0, 0),
+    Callback = function(color)
+        print("New color:", color)
+    end,
+})
+```
+
+Clicking the color swatch opens the picker panel. Drag the large square to change saturation/brightness, drag the bottom bar to change hue.
+
+**API:**
+
+```lua
+CP:Set(Color3.fromRGB(0, 255, 128))
+CP:Get()   -- returns Color3
+```
+
+---
+
+### Keybind
+
+A standalone keybind element (not attached to another component).
+
+```lua
+local KB = Section:AddKeybind({
+    Name     = "Fly Toggle",
+    Default  = Enum.KeyCode.F,
+    Mode     = "Toggle",   -- "Toggle" or "Button"
+    Callback = function(state)
+        -- state is a bool when Mode = "Toggle", nil when "Button"
+    end,
+})
+```
+
+Click the key display to rebind. Press the assigned key to fire the callback.
+
+**API:**
+
+```lua
+KB:Set(Enum.KeyCode.H)
+KB:Get()   -- returns current KeyCode
+```
+
+---
+
+### Label
+
+A read-only text display, useful for live stats.
+
+```lua
+local Lbl = Section:AddLabel("Status: Idle")
+-- or
+local Lbl = Section:AddLabel({ Text = "Status: Idle" })
+```
+
+**API:**
+
+```lua
+Lbl:Set("Status: Running")   -- update text at any time
+```
+
+---
+
+## Notifications
+
+Toast notifications slide in from the right side of the screen.
 
 ```lua
 Window:Notify({
-    Title = "Title Text",
-    Content = "Body text of the notification.",
-    Duration = 3
+    Title    = "Success",
+    Content  = "Operation completed successfully.",
+    Duration = 3,   -- seconds before auto-dismiss
 })
 ```
 
-Notifications stack bottom-right, slide in with a back-ease animation, and slide out automatically after `Duration` seconds. Disable them globally with:
+Global notifications (triggered automatically by components) can be disabled per-component by setting `Notifications = false`, or globally with `Notifications = false` in the window config.
+
+---
+
+## Window Methods
+
+| Method | Description |
+|---|---|
+| `Window:Show()` | Open / reveal the window |
+| `Window:Close()` | Hide the window with animation |
+| `Window:Toggle()` | Flip between open and closed |
+| `Window:Destroy()` | Fully remove the GUI from the screen |
+| `Window:SetTheme(name)` | Switch to a different theme at runtime |
+| `Window:SetToggleKeybind(KeyCode)` | Change the keyboard shortcut |
+| `Window:Notify({...})` | Fire a toast notification |
+
+---
+
+## Dashboard / Control Panel
+
+When `ControlPanel = true` (default), a **Dashboard** tab is automatically prepended with the following live panels:
+
+**Left Column**
+
+- **Profile & Account Summary** — avatar thumbnail, display name, username, account age badge, Premium status, Client ID copy button.
+- **Theme Management** — dropdown to switch themes in real time.
+- **Server & Game Info** — game name, Place ID copy, Job ID (server instance) copy.
+
+**Right Column**
+
+- **Live Performance Monitor** — FPS, ping (ms), RAM usage (MB), and data receive rate (KB/s), updated every 0.5 s.
+- **Character Physics Monitor** — live Position, CFrame, and Velocity with copy-to-clipboard buttons.
+
+**Full-width**
+
+- **Player List** — lists every other player with:
+  - Avatar thumbnail
+  - Display name and username
+  - **Teleport** button — moves your character next to them instantly
+  - **View toggle** — redirects the camera to follow that player; toggle off to return to yourself
+
+Set `ControlPanel = false` to hide this entire tab if you want a clean slate.
+
+---
+
+## Two-Column Layout
+
+Tabs can be split into a left and right column for more compact layouts.
 
 ```lua
-Window.GlobalNotifications = false
+local Tab = Window:AddTab("Settings", true)  -- second arg = twoColumnMode
+
+local LeftSec  = Tab:AddSection("Left Panel",  "Left")
+local RightSec = Tab:AddSection("Right Panel", "Right")
+-- Default (no alignment arg) spans full width
+local FullSec  = Tab:AddSection("Full Width")
 ```
 
 ---
 
-## 📊 Dashboard Tab (Optional)
+## Notes & Tips
 
-When `ControlPanel = true` (default), Spectrum automatically appends a **Dashboard** tab containing:
-
-- Live **FPS**, **Ping**, **Memory usage**, and **Network data received** widgets, refreshed twice per second
-- A **profile card** showing the local player's avatar thumbnail, display name, username, and user ID
-- The current place's name and a **copy Place ID** button (uses `setclipboard` if the executor supports it)
-
----
-
-## ⌨️ Keybind System
-
-Three ways to attach hotkeys:
-
-| Method | Where | Behavior |
-|---|---|---|
-| `Button:AddKeybind("F")` | On a button | Pressing the key re-triggers the button's callback |
-| `Toggle:AddKeybind("G")` | On a toggle | Pressing the key flips the toggle |
-| `Section:AddKeybind({...})` | Standalone | Independent keybind element with `"Button"` or `"Toggle"` mode |
-
-Clicking a keybind's key-button puts it into listening mode (`"..."`) until the next key press is captured.
+- **Dragging** — the window is draggable by its top bar. The floating toggle button is also independently draggable.
+- **Minimize** — the `–` button in the top bar collapses the window to just the title bar height; click again to restore.
+- **Close** — the `X` button calls `Window:Destroy()` which removes the GUI entirely. Re-running the script creates a new instance.
+- **Theme registry** — all themed elements (colors, strokes) update automatically when `SetTheme` is called; no manual refresh needed.
+- **Exploit compatibility** — the library checks for `gethui`, `CoreGui`, and `PlayerGui` in that order for its parent, and calls `syn.protect_gui` when available.
+- **Clipboard** — copy functions use `setclipboard` or `toclipboard` depending on your executor.
+- **Sound IDs** — all sounds use Roblox asset IDs and play through `SoundService`; they auto-clean up via `Debris`.
 
 ---
 
-## 🧩 Full Example
-
-```lua
-local Spectrum = loadstring(game:HttpGet("<raw-source-url>"))()
-
-local Window = Spectrum:AddWindow({
-    Name = "Example Panel",
-    Theme = "Aqua",
-    ToggleKeybind = Enum.KeyCode.RightControl,
-})
-
-local Tab = Window:AddTab("Main", true)
-
-local Left = Tab:AddSection("Controls", "Left")
-Left:AddButton({ Name = "Run Action", Callback = function() print("ran!") end })
-Left:AddToggle({ Name = "Enable Feature", Default = false, Callback = function(s) end })
-
-local Right = Tab:AddSection("Preferences", "Right")
-Right:AddDropdown({ Name = "Mode", Options = {"A", "B"}, Default = "A", Callback = function(v) end })
-Right:AddColorpicker({ Name = "Accent Color", Default = Color3.new(1,1,1), Callback = function(c) end })
-
-Window:Notify({ Title = "Ready", Content = "Panel loaded successfully.", Duration = 3 })
-```
-
----
-
-## 📌 Notes on Two-Column Mode
-
-- Pass `true` as the second argument of `Window:AddTab()` to enable the two-column layout for that tab.
-- Use `"Left"` / `"Right"` as the second argument of `Tab:AddSection()` to place a section on a given side; each takes up roughly half the row width.
-- Omit the argument, or pass `"Single"`, for a full-width section that stacks normally — this works in both layout modes.
-- Single-column tabs (`AddTab(name, false)`) ignore the alignment argument and always stack sections vertically.
+> **Spectrum UI Library** is designed for use inside Roblox exploit executors. Always ensure your usage complies with the terms of service of the platform and any applicable rules of the experience you are playing.
