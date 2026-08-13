@@ -1903,35 +1903,55 @@ function Spectrum:AddWindow(config)
     if ShowControlPanel then
         local DashTab = Window:AddTab("Dashboard", true)
 
-        -- SOL KOLON SEKSİYONLARI
-        local ProfileSec = DashTab:AddSection("👤 Kullanıcı & Sistem Bilgisi", "Left")
+        -- SOL KOLON SEKSİYONLARI: PROFiL KARTI
+        local ProfileSec = DashTab:AddSection("👤 Profil / Oyuncu Bilgileri", "Left")
+
+        local ProfileCardFrame = BaseElement(65)
+        
+        local AvatarImg = Create("ImageLabel", {
+            Size = UDim2.new(0, 46, 0, 46),
+            Position = UDim2.new(0, 10, 0.5, -23),
+            BackgroundColor3 = Theme.Secondary,
+            BorderSizePixel = 0,
+            Parent = ProfileCardFrame,
+        })
+        Themed(AvatarImg, "BackgroundColor3", "Secondary")
+        Themed(Stroke(AvatarImg, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+        Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = AvatarImg })
+
+        task.spawn(function()
+            local content, isLoaded = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+            if isLoaded then AvatarImg.Image = content end
+        end)
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, -70, 0, 20),
+            Position = UDim2.new(0, 64, 0, 12),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = LocalPlayer.DisplayName,
+            TextColor3 = Theme.Text,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            Parent = ProfileCardFrame,
+        }), "TextColor3", "Text")
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, -70, 0, 18),
+            Position = UDim2.new(0, 64, 0, 32),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamMedium,
+            Text = "@" .. LocalPlayer.Name .. " (ID: " .. LocalPlayer.UserId .. ")",
+            TextColor3 = Theme.SubText,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            Parent = ProfileCardFrame,
+        }), "TextColor3", "SubText")
 
         local ClientIdStr = "N/A"
         pcall(function() ClientIdStr = RbxAnalyticsService:GetClientId() end)
-
-        ProfileSec:AddButton({
-            Name = "Display Name: " .. LocalPlayer.DisplayName,
-            Callback = function()
-                CopyToClipboard(LocalPlayer.DisplayName)
-                Window:Notify({ Title = "Kopyalandı", Content = "Display Name panoya kopyalandı.", Duration = 2 })
-            end
-        })
-
-        ProfileSec:AddButton({
-            Name = "Username: @" .. LocalPlayer.Name,
-            Callback = function()
-                CopyToClipboard(LocalPlayer.Name)
-                Window:Notify({ Title = "Kopyalandı", Content = "Username panoya kopyalandı.", Duration = 2 })
-            end
-        })
-
-        ProfileSec:AddButton({
-            Name = "User ID: " .. tostring(LocalPlayer.UserId),
-            Callback = function()
-                CopyToClipboard(LocalPlayer.UserId)
-                Window:Notify({ Title = "Kopyalandı", Content = "User ID panoya kopyalandı.", Duration = 2 })
-            end
-        })
 
         ProfileSec:AddButton({
             Name = "Client ID Kopyala",
@@ -1941,7 +1961,7 @@ function Spectrum:AddWindow(config)
             end
         })
 
-        -- TEMA SEÇİMİ (Kullanıcı bilgilerinin hemen altında yer alır)
+        -- TEMA SEÇİMİ
         local ThemeSec = DashTab:AddSection("🎨 Tema Yönetimi", "Left")
         
         local themeNamesList = {}
@@ -2010,61 +2030,143 @@ function Spectrum:AddWindow(config)
 
         local VelLbl = PhysSec:AddLabel("Velocity: 0, 0, 0")
 
-        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU
-        local PlayerSec = DashTab:AddSection("👥 Oyuncu Etkileşimi", "Single")
-        
-        local function GetPlayerNames()
-            local list = {}
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer then table.insert(list, p.Name) end
-            end
-            if #list == 0 then table.insert(list, "Oyuncu Bulunamadı") end
-            return list
-        end
+        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU (Eski Düzen: Profil Fotoğrafı + Sağ Taraf Buton ve Toggle)
+        local PlayerSec = DashTab:AddSection("👥 Oyuncu Listesi", "Single")
 
-        local SelectedPlayerName = nil
-        local PlayerDropdown = PlayerSec:AddDropdown({
-            Name = "Oyuncu Seç",
-            Options = GetPlayerNames(),
-            Callback = function(val)
-                SelectedPlayerName = val
-            end
+        local PlayerListHolder = Create("Frame", {
+            Name = "PlayerListHolder",
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Parent = PlayerSec.Instance,
+        })
+        Create("UIListLayout", {
+            Padding = UDim.new(0, 6),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = PlayerListHolder,
         })
 
-        PlayerSec:AddButton({
-            Name = "Işınlan (Teleport)",
-            Callback = function()
-                if not SelectedPlayerName or SelectedPlayerName == "Oyuncu Bulunamadı" then return end
-                local target = Players:FindFirstChild(SelectedPlayerName)
-                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                    Window:Notify({ Title = "Teleport", Content = target.Name .. " yanına ışınlanıldı.", Duration = 2 })
+        local viewingPlayers = {}
+
+        local function RefreshPlayerListUI()
+            for _, child in ipairs(PlayerListHolder:GetChildren()) do
+                if child:IsA("Frame") then child:Destroy() end
+            end
+
+            for _, targetPlayer in ipairs(Players:GetPlayers()) do
+                if targetPlayer ~= LocalPlayer then
+                    local RowFrame = BaseElement(46)
+                    RowFrame.Parent = PlayerListHolder
+
+                    local RowAvatar = Create("ImageLabel", {
+                        Size = UDim2.new(0, 34, 0, 34),
+                        Position = UDim2.new(0, 10, 0.5, -17),
+                        BackgroundColor3 = Theme.Secondary,
+                        BorderSizePixel = 0,
+                        Parent = RowFrame,
+                    })
+                    Themed(RowAvatar, "BackgroundColor3", "Secondary")
+                    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = RowAvatar })
+
+                    task.spawn(function()
+                        local content, isLoaded = Players:GetUserThumbnailAsync(targetPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+                        if isLoaded then RowAvatar.Image = content end
+                    end)
+
+                    Themed(Create("TextLabel", {
+                        Size = UDim2.new(1, -210, 1, 0),
+                        Position = UDim2.new(0, 52, 0, 0),
+                        BackgroundTransparency = 1,
+                        Font = Enum.Font.GothamBold,
+                        Text = targetPlayer.DisplayName .. "\n@" .. targetPlayer.Name,
+                        TextColor3 = Theme.Text,
+                        TextSize = 11,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        Parent = RowFrame,
+                    }), "TextColor3", "Text")
+
+                    -- SAĞ TARAF KONTROLLERİ (Buton ve Toggle)
+                    local ControlsHolder = Create("Frame", {
+                        Size = UDim2.new(0, 150, 1, 0),
+                        Position = UDim2.new(1, -155, 0, 0),
+                        BackgroundTransparency = 1,
+                        Parent = RowFrame,
+                    })
+
+                    -- Işınlan Butonu
+                    local TpBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 75, 0, 26),
+                        Position = UDim2.new(0, 0, 0.5, -13),
+                        BackgroundColor3 = Theme.Secondary,
+                        Text = "Işınlan",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 11,
+                        TextColor3 = Theme.Text,
+                        AutoButtonColor = false,
+                        Parent = ControlsHolder,
+                    })
+                    Themed(TpBtn, "BackgroundColor3", "Secondary")
+                    Themed(TpBtn, "TextColor3", "Text")
+                    Themed(Stroke(TpBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+
+                    TpBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(TpBtn)
+                        PlaySound(Sounds.Click, 0.3)
+                        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                            Window:Notify({ Title = "Teleport", Content = targetPlayer.Name .. " yanına ışınlanıldı.", Duration = 2 })
+                        end
+                    end)
+
+                    -- İzle (View) Toggle Anahtarı
+                    local isViewing = viewingPlayers[targetPlayer.UserId] or false
+
+                    local ViewToggleBG = Create("Frame", {
+                        Size = UDim2.new(0, 65, 0, 26),
+                        Position = UDim2.new(0, 82, 0.5, -13),
+                        BackgroundColor3 = isViewing and Theme.Accent or Theme.Stroke,
+                        BorderSizePixel = 0,
+                        Parent = ControlsHolder,
+                    })
+                    Themed(Stroke(ViewToggleBG, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+
+                    local ViewToggleBtn = Create("TextButton", {
+                        Size = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Text = isViewing and "İzle: AÇIK" or "İzle: KAPALI",
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 10,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        AutoButtonColor = false,
+                        Parent = ViewToggleBG,
+                    })
+
+                    ViewToggleBtn.MouseButton1Click:Connect(function()
+                        ClickBounce(ViewToggleBG)
+                        PlaySound(Sounds.Toggle, 0.4)
+                        isViewing = not isViewing
+                        viewingPlayers[targetPlayer.UserId] = isViewing
+
+                        ViewToggleBG.BackgroundColor3 = isViewing and Theme.Accent or Theme.Stroke
+                        ViewToggleBtn.Text = isViewing and "İzle: AÇIK" or "İzle: KAPALI"
+
+                        if isViewing and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+                            workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+                            Window:Notify({ Title = "Kamera", Content = targetPlayer.Name .. " izleniyor.", Duration = 2 })
+                        else
+                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                                workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+                            end
+                        end
+                    end)
                 end
             end
-        })
-
-        local isViewing = false
-        PlayerSec:AddToggle({
-            Name = "Kamerayı Odakla (View)",
-            Default = false,
-            Callback = function(state)
-                if not SelectedPlayerName or SelectedPlayerName == "Oyuncu Bulunamadı" then return end
-                local target = Players:FindFirstChild(SelectedPlayerName)
-                if state and target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                    workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
-                else
-                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                        workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
-                    end
-                end
-            end
-        })
-
-        local function RefreshPList()
-            PlayerDropdown:Refresh(GetPlayerNames())
         end
-        Players.PlayerAdded:Connect(RefreshPList)
-        Players.PlayerRemoving:Connect(RefreshPList)
+
+        RefreshPlayerListUI()
+        Players.PlayerAdded:Connect(RefreshPlayerListUI)
+        Players.PlayerRemoving:Connect(RefreshPlayerListUI)
 
         -- PERFORMANS DÖNGÜSÜ
         local lastUpdate = tick()
