@@ -113,12 +113,12 @@ local Themes = {
 -- SES EFEKTLERİ & YARDIMCI FONKSİYONLAR
 --=====================================================================
 local Sounds = {
-    Click   = "rbxassetid://876939830",
-    Hover   = "rbxassetid://6042053626",
-    Toggle  = "rbxassetid://6042056524",
-    Notify  = "rbxassetid://6518811702",
-    Error   = "rbxassetid://6042055414",
-    Success = "rbxassetid://6042539569",
+    Click   = "rbxassetid://140207837688369",
+    Hover   = "rbxassetid://720166642",
+    Toggle  = "rbxassetid://140207837688369",
+    Notify  = "rbxassetid://112486094040833",
+    Error   = "rbxassetid://133843340754810",
+    Success = "rbxassetid://140207837688369",
 }
 
 local function PlaySound(id, volume)
