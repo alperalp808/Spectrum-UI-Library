@@ -247,6 +247,26 @@ function Spectrum:AddWindow(config)
         table.insert(ThemeCallbacks, fn)
     end
 
+    local function CreateBaseElement(parent, height)
+        local Frame = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, height or 38),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.06,
+            BorderSizePixel = 0,
+            Parent = parent,
+        })
+        Themed(Frame, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(Frame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+        Themed(Create("Frame", {
+            Size = UDim2.new(0, 3, 1, 0),
+            BackgroundColor3 = Theme.Accent,
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            Parent = Frame,
+        }), "BackgroundColor3", "Accent")
+        return Frame
+    end
+
     local ScreenGui = Create("ScreenGui", {
         Name = "SpectrumUI",
         ResetOnSpawn = false,
@@ -1003,6 +1023,7 @@ function Spectrum:AddWindow(config)
                 BorderSizePixel = 0,
                 Parent = parentContainer,
             })
+            Section.Instance = SectionOuter
             Themed(SectionOuter, "BackgroundColor3", "Secondary")
             Themed(Stroke(SectionOuter, Theme.Stroke, 1.5, 0.4), "Color", "Stroke")
 
@@ -1044,23 +1065,7 @@ function Spectrum:AddWindow(config)
             Pad(SectionOuter, 0, 0, 0, 10)
 
             local function BaseElement(height)
-                local Frame = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, height or 38),
-                    BackgroundColor3 = Theme.Tertiary,
-                    BackgroundTransparency = 0.06,
-                    BorderSizePixel = 0,
-                    Parent = ElementHolder,
-                })
-                Themed(Frame, "BackgroundColor3", "Tertiary")
-                Themed(Stroke(Frame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-                Themed(Create("Frame", {
-                    Size = UDim2.new(0, 3, 1, 0),
-                    BackgroundColor3 = Theme.Accent,
-                    BackgroundTransparency = 0.1,
-                    BorderSizePixel = 0,
-                    Parent = Frame,
-                }), "BackgroundColor3", "Accent")
-                return Frame
+                return CreateBaseElement(ElementHolder, height)
             end
 
             local function NameLabel(parent, text)
@@ -1906,7 +1911,7 @@ function Spectrum:AddWindow(config)
         -- SOL KOLON SEKSİYONLARI: PROFiL KARTI
         local ProfileSec = DashTab:AddSection("👤 Profil / Oyuncu Bilgileri", "Left")
 
-        local ProfileCardFrame = BaseElement(65)
+        local ProfileCardFrame = CreateBaseElement(ProfileSec.Instance, 65)
         
         local AvatarImg = Create("ImageLabel", {
             Size = UDim2.new(0, 46, 0, 46),
@@ -2030,7 +2035,7 @@ function Spectrum:AddWindow(config)
 
         local VelLbl = PhysSec:AddLabel("Velocity: 0, 0, 0")
 
-        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU (Eski Düzen: Profil Fotoğrafı + Sağ Taraf Buton ve Toggle)
+        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU
         local PlayerSec = DashTab:AddSection("👥 Oyuncu Listesi", "Single")
 
         local PlayerListHolder = Create("Frame", {
@@ -2055,8 +2060,7 @@ function Spectrum:AddWindow(config)
 
             for _, targetPlayer in ipairs(Players:GetPlayers()) do
                 if targetPlayer ~= LocalPlayer then
-                    local RowFrame = BaseElement(46)
-                    RowFrame.Parent = PlayerListHolder
+                    local RowFrame = CreateBaseElement(PlayerListHolder, 46)
 
                     local RowAvatar = Create("ImageLabel", {
                         Size = UDim2.new(0, 34, 0, 34),
@@ -2086,7 +2090,7 @@ function Spectrum:AddWindow(config)
                         Parent = RowFrame,
                     }), "TextColor3", "Text")
 
-                    -- SAĞ TARAF KONTROLLERİ (Buton ve Toggle)
+                    -- SAĞ TARAF KONTROLLERİ
                     local ControlsHolder = Create("Frame", {
                         Size = UDim2.new(0, 150, 1, 0),
                         Position = UDim2.new(1, -155, 0, 0),
