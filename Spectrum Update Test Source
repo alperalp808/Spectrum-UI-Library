@@ -1,6 +1,6 @@
 --[[
     ============================================================
-    SPECTRUM UI LIBRARY  |  v3.9.5 (Enhanced Dashboard & Foggy Redesign)
+    SPECTRUM UI LIBRARY  |  v3.9.5 (Redesigned Modern Dashboard)
     ============================================================
 ]]
 
@@ -1908,52 +1908,132 @@ function Spectrum:AddWindow(config)
     if ShowControlPanel then
         local DashTab = Window:AddTab("Dashboard", true)
 
-        -- SOL KOLON SEKSİYONLARI: PROFiL KARTI (Çakışma Önlenmiş Düzgün Layout)
-        local ProfileSec = DashTab:AddSection("👤 Profil / Oyuncu Bilgileri", "Left")
+        -- SOL KOLON SEKSİYONLARI: PROFiL KARTI (Tasarım Yenilendi)
+        local ProfileSec = DashTab:AddSection("👤 Profil & Hesap Özeti", "Left")
 
-        local ProfileCardFrame = CreateBaseElement(ProfileSec.Instance, 68)
-        
+        local ProfileCardFrame = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 100),
+            BackgroundColor3 = Theme.Tertiary,
+            BackgroundTransparency = 0.06,
+            BorderSizePixel = 0,
+            Parent = ProfileSec.Instance,
+        })
+        Themed(ProfileCardFrame, "BackgroundColor3", "Tertiary")
+        Themed(Stroke(ProfileCardFrame, Theme.Stroke, 1, 0.3), "Color", "Stroke")
+        Pad(ProfileCardFrame, 10, 10, 10, 10)
+
+        -- Sol Accent Çizgisi
+        Themed(Create("Frame", {
+            Size = UDim2.new(0, 3, 1, 0),
+            Position = UDim2.new(0, -10, 0, 0),
+            BackgroundColor3 = Theme.Accent,
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            Parent = ProfileCardFrame,
+        }), "BackgroundColor3", "Accent")
+
+        -- Avatar Görseli
         local AvatarImg = Create("ImageLabel", {
-            Size = UDim2.new(0, 46, 0, 46),
-            Position = UDim2.new(0, 12, 0.5, -23),
+            Size = UDim2.new(0, 56, 0, 56),
+            Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = Theme.Secondary,
             BorderSizePixel = 0,
             Parent = ProfileCardFrame,
         })
         Themed(AvatarImg, "BackgroundColor3", "Secondary")
-        Themed(Stroke(AvatarImg, Theme.Stroke, 1, 0.3), "Color", "Stroke")
-        Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = AvatarImg })
+        Themed(Stroke(AvatarImg, Theme.Accent, 1.5, 0.2), "Color", "Accent")
+        Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = AvatarImg })
 
         task.spawn(function()
             local content, isLoaded = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
             if isLoaded then AvatarImg.Image = content end
         end)
 
+        -- Kullanıcı Adı
         Themed(Create("TextLabel", {
-            Size = UDim2.new(1, -78, 0, 20),
-            Position = UDim2.new(0, 68, 0, 14),
+            Size = UDim2.new(1, -66, 0, 18),
+            Position = UDim2.new(0, 66, 0, 0),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
             Text = LocalPlayer.DisplayName,
             TextColor3 = Theme.Text,
-            TextSize = 13,
+            TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextTruncate = Enum.TextTruncate.AtEnd,
             Parent = ProfileCardFrame,
         }), "TextColor3", "Text")
 
+        -- Etiket / ID
         Themed(Create("TextLabel", {
-            Size = UDim2.new(1, -78, 0, 18),
-            Position = UDim2.new(0, 68, 0, 34),
+            Size = UDim2.new(1, -66, 0, 14),
+            Position = UDim2.new(0, 66, 0, 18),
             BackgroundTransparency = 1,
             Font = Enum.Font.GothamMedium,
-            Text = "@" .. LocalPlayer.Name .. " (ID: " .. LocalPlayer.UserId .. ")",
+            Text = "@" .. LocalPlayer.Name .. " • ID: " .. LocalPlayer.UserId,
             TextColor3 = Theme.SubText,
             TextSize = 11,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextTruncate = Enum.TextTruncate.AtEnd,
             Parent = ProfileCardFrame,
         }), "TextColor3", "SubText")
+
+        -- Rozetler / Statü (Premium & Hesap Yaşı)
+        local BadgeHolder = Create("Frame", {
+            Size = UDim2.new(1, -66, 0, 20),
+            Position = UDim2.new(0, 66, 0, 36),
+            BackgroundTransparency = 1,
+            Parent = ProfileCardFrame,
+        })
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            Padding = UDim.new(0, 6),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = BadgeHolder,
+        })
+
+        -- Account Age Badge
+        local AgeBadge = Create("Frame", {
+            Size = UDim2.new(0, 85, 1, 0),
+            BackgroundColor3 = Theme.Secondary,
+            Parent = BadgeHolder,
+        })
+        Themed(AgeBadge, "BackgroundColor3", "Secondary")
+        Themed(Stroke(AgeBadge, Theme.Stroke, 1, 0.4), "Color", "Stroke")
+        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = AgeBadge })
+
+        Themed(Create("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = "📅 " .. LocalPlayer.AccountAge .. " Gün",
+            TextColor3 = Theme.SubText,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = AgeBadge,
+        }), "TextColor3", "SubText")
+
+        -- Premium Status Badge
+        local IsPremium = LocalPlayer.MembershipType == Enum.MembershipType.Premium
+        local PremBadge = Create("Frame", {
+            Size = UDim2.new(0, 80, 1, 0),
+            BackgroundColor3 = IsPremium and Color3.fromRGB(255, 170, 0) or Theme.Secondary,
+            BackgroundTransparency = IsPremium and 0.8 or 0,
+            Parent = BadgeHolder,
+        })
+        if not IsPremium then Themed(PremBadge, "BackgroundColor3", "Secondary") end
+        Themed(Stroke(PremBadge, IsPremium and Color3.fromRGB(255, 170, 0) or Theme.Stroke, 1, 0.4), "Color", IsPremium and "Accent" or "Stroke")
+        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = PremBadge })
+
+        Create("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            Text = IsPremium and "⭐ Premium" or "👤 Normal",
+            TextColor3 = IsPremium and Color3.fromRGB(255, 200, 50) or Theme.SubText,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = PremBadge,
+        })
 
         local ClientIdStr = "N/A"
         pcall(function() ClientIdStr = RbxAnalyticsService:GetClientId() end)
@@ -2035,7 +2115,7 @@ function Spectrum:AddWindow(config)
 
         local VelLbl = PhysSec:AddLabel("Velocity: 0, 0, 0")
 
-        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU
+        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU (Değiştirilmedi)
         local PlayerSec = DashTab:AddSection("👥 Oyuncu Listesi", "Single")
 
         local PlayerListHolder = Create("Frame", {
