@@ -1773,25 +1773,44 @@ function Spectrum:AddWindow(config)
                 Themed(DropBtn, "TextColor3", "Text")
                 Themed(Stroke(DropBtn, Theme.Stroke, 1, 0.3), "Color", "Stroke")
 
-                local ListFrame = Create("Frame", {
+                -- GÜNCELLEME: Sınırsız Büyümeyen & Kaydırılabilir (ScrollingFrame) Dropdown Listesi Frame'i
+                local ListFrame = Create("ScrollingFrame", {
                     Size = UDim2.new(0, 160, 0, 0),
                     Position = UDim2.new(0, 0, 0, 0),
                     BackgroundColor3 = Theme.Secondary,
                     BackgroundTransparency = 0.05,
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
-                    AutomaticSize = Enum.AutomaticSize.Y,
                     Visible = false,
                     ZIndex = 60,
+                    ScrollBarThickness = 3,
+                    ScrollBarImageColor3 = Theme.Accent,
+                    CanvasSize = UDim2.new(0, 0, 0, 0),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     Parent = Overlay,
                 })
                 Themed(ListFrame, "BackgroundColor3", "Secondary")
+                Themed(ListFrame, "ScrollBarImageColor3", "Accent")
                 Themed(Stroke(ListFrame, Theme.Stroke, 1, 0.2), "Color", "Stroke")
+                
                 Create("UIListLayout", {
                     SortOrder = Enum.SortOrder.LayoutOrder,
+                    Padding = UDim.new(0, 2),
                     Parent = ListFrame,
                 })
                 Pad(ListFrame, 4, 4, 4, 4)
+
+                local ITEM_HEIGHT = 26
+                local MAX_VISIBLE_ITEMS = 4
+
+                local function CalculateDropdownHeight()
+                    local count = #Options
+                    local visibleCount = math.min(count, MAX_VISIBLE_ITEMS)
+                    local totalHeight = (visibleCount * ITEM_HEIGHT) + ((visibleCount - 1) * 2) + 8
+                    return totalHeight
+                end
+
+                local optionButtons = {}
 
                 local function RefreshText()
                     if Multi then
@@ -1805,16 +1824,33 @@ function Spectrum:AddWindow(config)
                     end
                 end
 
+                -- GÜNCELLEME: Seçili Öğe Durumunu Güncelleyen Fonksiyon
+                local function UpdateVisuals()
+                    for opt, btn in pairs(optionButtons) do
+                        local isSel = (Multi and Selected[opt]) or (not Multi and Selected == opt)
+                        if isSel then
+                            btn.BackgroundColor3 = Theme.Accent
+                            btn.BackgroundTransparency = 0.2
+                            btn.TextColor3 = Color3.new(1, 1, 1)
+                        else
+                            btn.BackgroundColor3 = Theme.Tertiary
+                            btn.BackgroundTransparency = 1
+                            btn.TextColor3 = Theme.Text
+                        end
+                    end
+                end
+
                 local function BuildOptions()
+                    optionButtons = {}
                     for _, c in ipairs(ListFrame:GetChildren()) do
                         if c:IsA("TextButton") then c:Destroy() end
                     end
+
                     for _, opt in ipairs(Options) do
-                        local isSel = (Multi and Selected[opt]) or (not Multi and Selected == opt)
                         local OptBtn = Create("TextButton", {
-                            Size = UDim2.new(1, 0, 0, 24),
+                            Size = UDim2.new(1, -4, 0, ITEM_HEIGHT),
                             BackgroundColor3 = Theme.Tertiary,
-                            BackgroundTransparency = isSel and 0.1 or 1,
+                            BackgroundTransparency = 1,
                             Text = "  " .. tostring(opt),
                             Font = Enum.Font.GothamMedium,
                             TextSize = 12,
@@ -1824,31 +1860,42 @@ function Spectrum:AddWindow(config)
                             ZIndex = 61,
                             Parent = ListFrame,
                         })
-                        Themed(OptBtn, "BackgroundColor3", "Tertiary")
-                        Themed(OptBtn, "TextColor3", "Text")
+                        
+                        optionButtons[opt] = OptBtn
+
                         OptBtn.MouseButton1Click:Connect(function()
                             PlaySound(Sounds.Click, 0.25)
                             if Multi then
                                 Selected[opt] = not Selected[opt]
-                                OptBtn.BackgroundTransparency = Selected[opt] and 0.1 or 1
                             else
                                 Selected = opt
                                 ClosePopup(ListFrame)
                             end
+                            
+                            UpdateVisuals()
                             RefreshText()
                             DoNotify(Notifications, "Dropdown Tetiklendi", Name .. " -> " .. tostring(opt))
                             task.spawn(Callback, Selected)
                         end)
                     end
+
+                    ListFrame.Size = UDim2.new(0, ListFrame.Size.X.Offset, 0, CalculateDropdownHeight())
+                    UpdateVisuals()
                 end
+
                 BuildOptions()
                 RefreshText()
+
+                OnThemeChange(function()
+                    UpdateVisuals()
+                end)
 
                 DropBtn.MouseButton1Click:Connect(function()
                     PlaySound(Sounds.Click, 0.3)
                     if ListFrame.Visible then
                         ClosePopup(ListFrame)
                     else
+                        ListFrame.Size = UDim2.new(0, DropBtn.AbsoluteSize.X, 0, CalculateDropdownHeight())
                         OpenPopup(ListFrame, DropBtn, 4, DropBtn.AbsoluteSize.X, "right")
                     end
                 end)
@@ -1861,7 +1908,7 @@ function Spectrum:AddWindow(config)
                 function API:Set(value)
                     Selected = value
                     RefreshText()
-                    BuildOptions()
+                    UpdateVisuals()
                     task.spawn(Callback, Selected)
                 end
                 function API:Get()
@@ -2115,7 +2162,7 @@ function Spectrum:AddWindow(config)
 
         local VelLbl = PhysSec:AddLabel("Velocity: 0, 0, 0")
 
-        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU (Değiştirilmedi)
+        -- ETKİLEŞİMLİ OYUNCU LİSTESİ SEKSİYONU
         local PlayerSec = DashTab:AddSection("👥 Oyuncu Listesi", "Single")
 
         local PlayerListHolder = Create("Frame", {
